@@ -29,7 +29,7 @@ it. Application builds must verify the installed manifest before using it.
   adjacent `rustc-1.98.1-src-aros.diff`, rebased onto the pinned nightly's
   rust-src. Its libc paths refer to `library/vendor` in the rust-src component.
   It contains no `compiler/`, `src/bootstrap/` or `src/librustdoc/` changes.
-- `source-files.json` checks the preimages of the 31 affected files, including
+- `source-files.json` checks the preimages of the affected library files, including
   absence of added files. It detects use of the already-patched shared
   `rust-aros` source. It does not authenticate the complete source distribution.
 - `probe.rs` retains std filesystem, thread, socket and process paths in the
@@ -226,3 +226,21 @@ and thread-local errno. Native errno behavior remains a guest-test requirement.
 `ABI/libc-exports.py` extracts and links all ELF members of std/application libc
 explicitly, rejecting duplicate C providers independently of archive order. Its
 optional `--binary` checks that the application contains one native provider.
+
+## Embedded AROS core source
+
+The SDK repository owns these library/tooling sources. Generate the core's
+integration snapshot from one immutable commit instead of editing two copies:
+
+```sh
+python3 tools/export-core-toolchain.py --output /new/core-component
+python3 tools/export-core-toolchain.py --check /new/core-component
+```
+
+The exporter records source/export hashes and the source commit in
+`SOURCE-ORIGIN.json`. It preserves APL notices for integration code and selects
+the core's authoritative socket header; the standalone header snapshot is not
+exported. Output must be a new directory outside this SDK repository. The core
+owns OS implementations and its C ABI; this export does not copy or modify
+those sources. Verify the snapshot with the same exporter revision. Runtime
+qualification is separate from export equality.
