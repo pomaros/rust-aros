@@ -1,0 +1,92 @@
+{
+ "backtrace-0.3.76": {
+  "name": "backtrace",
+  "version": "0.3.76",
+  "sha256": "bb531853791a215d7c62a30daf0dde835f381ab5de4589cfe7c649d2cbe92bd6"
+ },
+ "ctor-1.0.12": {
+  "name": "ctor",
+  "version": "1.0.12",
+  "sha256": "2d83cb7e7a873830708d6b02a78cd36a592c6fa14bf267b68725103b85c0d77f"
+ },
+ "errno-0.3.14": {
+  "name": "errno",
+  "version": "0.3.14",
+  "sha256": "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
+ },
+ "getrandom-0.2.17": {
+  "name": "getrandom",
+  "version": "0.2.17",
+  "sha256": "ff2abc00be7fca6ebc474524697ae276ad847ad0a6b3faa4bcb027e9a4614ad0"
+ },
+ "getrandom-0.3.4": {
+  "name": "getrandom",
+  "version": "0.3.4",
+  "sha256": "899def5c37c4fd7b2664648c28120ecec138e4d395b459e5ca34f9cce2dd77fd"
+ },
+ "getrandom-0.4.3": {
+  "name": "getrandom",
+  "version": "0.4.3",
+  "sha256": "300e883d756b2e4ec94e02791f39b04b522276138852cfc41d9fb7e904106099"
+ },
+ "inventory-0.3.24": {
+  "name": "inventory",
+  "version": "0.3.24",
+  "sha256": "a4f0c30c76f2f4ccee3fe55a2435f691ca00c0e4bd87abe4f4a851b1d4dac39b"
+ },
+ "libc-0.2.190": {
+  "name": "libc",
+  "version": "0.2.190",
+  "sha256": "ce5d3ddc6d3fa000eb1536d85e147bfe31aacaba692ed6a876f95cb7c855be78"
+ },
+ "libsqlite3-sys-0.28.0": {
+  "name": "libsqlite3-sys",
+  "version": "0.28.0",
+  "sha256": "0c10584274047cb335c23d3e61bcef8e323adae7c5c8c760540f73610177fc3f"
+ },
+ "libsqlite3-sys-0.30.1": {
+  "name": "libsqlite3-sys",
+  "version": "0.30.1",
+  "sha256": "2e99fb7a497b1e3339bc746195567ed8d3e24945ecd636e3619d20b9de9e9149"
+ },
+ "memmap2-0.9.10": {
+  "name": "memmap2",
+  "version": "0.9.10",
+  "sha256": "714098028fe011992e1c3962653c96b2d578c4b4bce9036e15ff220319b1e0e3"
+ },
+ "mio-1.2.1": {
+  "name": "mio",
+  "version": "1.2.1",
+  "sha256": "02bd0af71c67b473010cbbc60715ee815645a4dc942899111f494b4b737d6fda"
+ },
+ "parking_lot_core-0.9.12": {
+  "name": "parking_lot_core",
+  "version": "0.9.12",
+  "sha256": "2621685985a2ebf1c516881c026032ac7deafcda1a2c9b7850dc81e3dfcb64c1"
+ },
+ "rustix-1.1.4": {
+  "name": "rustix",
+  "version": "1.1.4",
+  "sha256": "b6fe4565b9518b83ef4f91bb47ce29620ca828bd32cb7e408f0062e9930ba190"
+ },
+ "serde-1.0.228": {
+  "name": "serde",
+  "version": "1.0.228",
+  "sha256": "9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e"
+ },
+ "serde_core-1.0.228": {
+  "name": "serde_core",
+  "version": "1.0.228",
+  "sha256": "41d385c7d4ca58e59fc732af25c3983b67ac852c1a25000afe1175de458b67ad"
+ },
+ "tempfile-3.23.0": {
+  "name": "tempfile",
+  "version": "3.23.0",
+  "sha256": "2d31c77bdf42a745371d260a26ca7163f1e0924b64afa0b688e61b5a9fa02f16"
+ },
+ "tempfile-3.27.0": {
+  "name": "tempfile",
+  "version": "3.27.0",
+  "sha256": "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
+ }
+}

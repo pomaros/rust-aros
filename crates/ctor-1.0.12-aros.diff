@@ -1,0 +1,11 @@
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/lib.rs b/src/lib.rs
+--- a/src/lib.rs	2026-10-25 02:03:01
++++ b/src/lib.rs	2026-10-25 02:03:01
+@@ -512,6 +512,7 @@
+             (any(
+                 target_os = "linux",
+                 target_os = "android",
++                target_os = "aros",
+                 target_os = "freebsd",
+                 target_os = "netbsd",
+                 target_os = "openbsd",

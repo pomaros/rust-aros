@@ -1,0 +1,50 @@
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/sqlite3/sqlite3.c b/sqlite3/sqlite3.c
+--- a/sqlite3/sqlite3.c	2026-10-25 02:03:02
++++ b/sqlite3/sqlite3.c	2026-10-25 02:03:02
+@@ -41300,6 +41300,21 @@
+     got = osPread64(id->h, pBuf, cnt, offset);
+     SimulateIOError( got = -1 );
+ #else
++#ifdef __AROS__
++    /* AROS: the C library's lseek past the end of a file extends the file
++    ** with zeros (DOS cannot seek past the end), so a read there must not
++    ** seek at all. It is a short read of nothing, as POSIX reads it. The
++    ** pager reads the change counter at offset 24 of a database that may
++    ** still be empty; seeking would turn that database into 24 zero bytes
++    ** and every later open into "file is not a database". */
++    {
++      struct stat sStat;
++      if( osFstat(id->h, &sStat)==0 && offset>=(i64)sStat.st_size ){
++        got = 0;
++        break;
++      }
++    }
++#endif
+     newOffset = lseek(id->h, offset, SEEK_SET);
+     SimulateIOError( newOffset = -1 );
+     if( newOffset<0 ){
+@@ -44676,6 +44691,24 @@
+   path.nSymlink = 0;
+   path.nOut = nOut;
+   path.zOut = zOut;
++#ifdef __AROS__
++  /* AROS: a path that names a device or an assign ("HOME:Data/x") is
++  ** absolute. DOS resolves it from that name, not from the current
++  ** directory, and it carries no "." or ".." elements and no symbolic
++  ** link to follow here, so it is handed over unchanged. Prefixing the
++  ** current directory, or the leading '/' the element walk below adds,
++  ** would make it the parent of the current directory to DOS. */
++  {
++    const char *zColon = strchr(zPath, ':');
++    const char *zSlash = strchr(zPath, '/');
++    if( zColon && (zSlash==0 || zSlash>zColon) ){
++      size_t n = strlen(zPath);
++      if( n+1>(size_t)nOut ) return SQLITE_CANTOPEN_BKPT;
++      memcpy(zOut, zPath, n+1);
++      return SQLITE_OK;
++    }
++  }
++#endif
+   if( zPath[0]!='/' ){
+     char zPwd[SQLITE_MAX_PATHLEN+2];
+     if( osGetcwd(zPwd, sizeof(zPwd)-2)==0 ){

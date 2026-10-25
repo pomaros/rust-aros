@@ -1,0 +1,2206 @@
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/event/poll_fd.rs b/src/backend/libc/event/poll_fd.rs
+--- a/src/backend/libc/event/poll_fd.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/event/poll_fd.rs	2026-10-25 02:03:03
+@@ -23,15 +23,19 @@
+         /// `POLLOUT`
+         const OUT = c::POLLOUT;
+         /// `POLLRDNORM`
++        #[cfg(not(target_os = "aros"))]
+         const RDNORM = c::POLLRDNORM;
+         /// `POLLWRNORM`
+         #[cfg(not(target_os = "l4re"))]
++        #[cfg(not(target_os = "aros"))]
+         const WRNORM = c::POLLWRNORM;
+         /// `POLLRDBAND`
+         #[cfg(not(any(target_os = "l4re", target_os = "wasi")))]
++        #[cfg(not(target_os = "aros"))]
+         const RDBAND = c::POLLRDBAND;
+         /// `POLLWRBAND`
+         #[cfg(not(any(target_os = "l4re", target_os = "wasi")))]
++        #[cfg(not(target_os = "aros"))]
+         const WRBAND = c::POLLWRBAND;
+         /// `POLLERR`
+         const ERR = c::POLLERR;
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/event/syscalls.rs b/src/backend/libc/event/syscalls.rs
+--- a/src/backend/libc/event/syscalls.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/event/syscalls.rs	2026-10-25 02:03:03
+@@ -485,7 +485,7 @@
+     unsafe { ret(c::port_send(borrowed_fd(port), events, userdata)) }
+ }
+ 
+-#[cfg(not(any(target_os = "redox", target_os = "wasi")))]
++#[cfg(not(any(target_os = "redox", target_os = "wasi", target_os = "aros")))]
+ pub(crate) fn pause() {
+     let r = unsafe { c::pause() };
+     let errno = libc_errno::errno().0;
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/fs/dir.rs b/src/backend/libc/fs/dir.rs
+--- a/src/backend/libc/fs/dir.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/fs/dir.rs	2026-10-25 02:03:03
+@@ -23,6 +23,7 @@
+     target_os = "vita",
+     target_os = "wasi",
+ )))]
++#[cfg(not(target_os = "aros"))]
+ use crate::fs::{fstatfs, StatFs};
+ #[cfg(not(any(solarish, target_os = "vita", target_os = "wasi")))]
+ use crate::fs::{fstatvfs, StatVfs};
+@@ -251,6 +252,7 @@
+         target_os = "wasi",
+     )))]
+     #[inline]
++    #[cfg(not(target_os = "aros"))]
+     pub fn statfs(&self) -> io::Result<StatFs> {
+         fstatfs(unsafe { BorrowedFd::borrow_raw(c::dirfd(self.libc_dir.as_ptr())) })
+     }
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/fs/mod.rs b/src/backend/libc/fs/mod.rs
+--- a/src/backend/libc/fs/mod.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/fs/mod.rs	2026-10-25 02:03:03
+@@ -9,6 +9,7 @@
+     target_os = "vita",
+     target_os = "wasi"
+ )))]
++#[cfg(not(target_os = "aros"))]
+ pub(crate) mod makedev;
+ #[cfg(not(windows))]
+ pub(crate) mod syscalls;
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/fs/syscalls.rs b/src/backend/libc/fs/syscalls.rs
+--- a/src/backend/libc/fs/syscalls.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/fs/syscalls.rs	2026-10-25 02:03:03
+@@ -48,6 +48,7 @@
+     target_os = "vita",
+     target_os = "wasi",
+ )))]
++#[cfg(not(target_os = "aros"))]
+ use crate::fs::StatFs;
+ #[cfg(not(any(target_os = "espidf", target_os = "vita")))]
+ use crate::fs::Timestamps;
+@@ -161,6 +162,7 @@
+     #[cfg(any(
+         apple,
+         freebsdlike,
++        target_os = "aros",
+         all(target_os = "android", target_pointer_width = "32")
+     ))]
+     let mode: c::c_uint = mode.bits().into();
+@@ -169,6 +171,7 @@
+     #[cfg(not(any(
+         apple,
+         freebsdlike,
++        target_os = "aros",
+         all(target_os = "android", target_pointer_width = "32")
+     )))]
+     let mode: c::mode_t = mode.bits() as _;
+@@ -229,6 +232,7 @@
+     #[cfg(any(
+         apple,
+         freebsdlike,
++        target_os = "aros",
+         all(target_os = "android", target_pointer_width = "32")
+     ))]
+     let mode: c::c_uint = mode.bits().into();
+@@ -237,6 +241,7 @@
+     #[cfg(not(any(
+         apple,
+         freebsdlike,
++        target_os = "aros",
+         all(target_os = "android", target_pointer_width = "32")
+     )))]
+     let mode: c::mode_t = mode.bits() as _;
+@@ -263,12 +268,19 @@
+     target_os = "wasi",
+ )))]
+ #[inline]
++#[cfg(not(target_os = "aros"))]
+ pub(crate) fn statfs(filename: &CStr) -> io::Result<StatFs> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     unsafe {
+         let mut result = MaybeUninit::<StatFs>::uninit();
+         ret(c::statfs(c_str(filename), result.as_mut_ptr()))?;
+         Ok(result.assume_init())
+     }
++
++    }
+ }
+ 
+ #[cfg(not(target_os = "wasi"))]
+@@ -294,6 +306,12 @@
+     path: &CStr,
+     buf: (*mut u8, usize),
+ ) -> io::Result<usize> {
++    #[cfg(target_os = "aros")]
++    {
++        if borrowed_fd(dirfd) != c::AT_FDCWD { return Err(io::Errno::NOSYS); }
++        return ret_usize(c::readlink(c_str(path), buf.0.cast(), buf.1) as isize);
++    }
++    #[cfg(not(target_os = "aros"))]
+     ret_usize(c::readlinkat(borrowed_fd(dirfd), c_str(path), buf.0.cast(), buf.1) as isize)
+ }
+ 
+@@ -303,6 +321,12 @@
+ 
+ #[cfg(not(target_os = "redox"))]
+ pub(crate) fn mkdirat(dirfd: BorrowedFd<'_>, path: &CStr, mode: Mode) -> io::Result<()> {
++    #[cfg(target_os = "aros")]
++    {
++        if borrowed_fd(dirfd) != c::AT_FDCWD { return Err(io::Errno::NOSYS); }
++        return mkdir(path, mode);
++    }
++    #[cfg(not(target_os = "aros"))]
+     unsafe {
+         ret(c::mkdirat(
+             borrowed_fd(dirfd),
+@@ -820,6 +844,10 @@
+     access: Access,
+     flags: AtFlags,
+ ) -> io::Result<()> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     // macOS ≤ 10.9 lacks `faccessat`.
+     #[cfg(target_os = "macos")]
+     unsafe {
+@@ -862,6 +890,8 @@
+             bitflags_bits!(flags),
+         ))
+     }
++
++    }
+ }
+ 
+ #[cfg(target_os = "emscripten")]
+@@ -891,6 +921,10 @@
+     times: &Timestamps,
+     flags: AtFlags,
+ ) -> io::Result<()> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     // Old 32-bit version: libc has `utimensat` but it is not y2038 safe by
+     // default. But there may be a `__utimensat64` we can use.
+     #[cfg(all(fix_y2038, not(apple)))]
+@@ -1042,6 +1076,8 @@
+             }
+         }
+     }
++
++    }
+ }
+ 
+ #[cfg(all(fix_y2038, not(apple)))]
+@@ -1210,6 +1246,10 @@
+     mode: Mode,
+     dev: Dev,
+ ) -> io::Result<()> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     unsafe {
+         ret(c::mknodat(
+             borrowed_fd(dirfd),
+@@ -1218,6 +1258,8 @@
+             dev.try_into().map_err(|_e| io::Errno::PERM)?,
+         ))
+     }
++
++    }
+ }
+ 
+ #[cfg(linux_kernel)]
+@@ -1601,12 +1643,19 @@
+     target_os = "vita",
+     target_os = "wasi",
+ )))]
++#[cfg(not(target_os = "aros"))]
+ pub(crate) fn fstatfs(fd: BorrowedFd<'_>) -> io::Result<StatFs> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     let mut statfs = MaybeUninit::<StatFs>::uninit();
+     unsafe {
+         ret(c::fstatfs(borrowed_fd(fd), statfs.as_mut_ptr()))?;
+         Ok(statfs.assume_init())
+     }
++
++    }
+ }
+ 
+ #[cfg(not(target_os = "wasi"))]
+@@ -1640,6 +1689,10 @@
+ 
+ #[cfg(not(any(target_os = "espidf", target_os = "horizon", target_os = "vita")))]
+ pub(crate) fn futimens(fd: BorrowedFd<'_>, times: &Timestamps) -> io::Result<()> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     // Old 32-bit version: libc has `futimens` but it is not y2038 safe by
+     // default. But there may be a `__futimens64` we can use.
+     #[cfg(all(fix_y2038, not(apple)))]
+@@ -1701,6 +1754,8 @@
+             0,
+         ))
+     }
++
++    }
+ }
+ 
+ #[cfg(all(fix_y2038, not(apple)))]
+@@ -1751,6 +1806,10 @@
+     offset: u64,
+     len: u64,
+ ) -> io::Result<()> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     // Silently cast to `i64`; we'll get `EINVAL` if the value is negative.
+     let offset = offset as i64;
+     let len = len as i64;
+@@ -1782,6 +1841,8 @@
+             Err(io::Errno(err))
+         }
+     }
++
++    }
+ }
+ 
+ #[cfg(apple)]
+@@ -1829,7 +1890,13 @@
+     target_os = "vita",
+ )))]
+ pub(crate) fn fdatasync(fd: BorrowedFd<'_>) -> io::Result<()> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     unsafe { ret(c::fdatasync(borrowed_fd(fd))) }
++
++    }
+ }
+ 
+ pub(crate) fn ftruncate(fd: BorrowedFd<'_>, length: u64) -> io::Result<()> {
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/fs/types.rs b/src/backend/libc/fs/types.rs
+--- a/src/backend/libc/fs/types.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/fs/types.rs	2026-10-25 02:03:03
+@@ -785,6 +785,7 @@
+             target_os = "hurd",
+             target_os = "wasi",
+         )))]
++        #[cfg(not(target_os = "aros"))]
+         const KEEP_SIZE = bitcast!(c::FALLOC_FL_KEEP_SIZE);
+         /// `FALLOC_FL_PUNCH_HOLE`
+         #[cfg(not(any(
+@@ -795,6 +796,7 @@
+             target_os = "hurd",
+             target_os = "wasi",
+         )))]
++        #[cfg(not(target_os = "aros"))]
+         const PUNCH_HOLE = bitcast!(c::FALLOC_FL_PUNCH_HOLE);
+         /// `FALLOC_FL_NO_HIDE_STALE`
+         #[cfg(not(any(
+@@ -810,6 +812,7 @@
+             target_os = "linux",
+             target_os = "wasi",
+         )))]
++        #[cfg(not(target_os = "aros"))]
+         const NO_HIDE_STALE = bitcast!(c::FALLOC_FL_NO_HIDE_STALE);
+         /// `FALLOC_FL_COLLAPSE_RANGE`
+         #[cfg(not(any(
+@@ -821,6 +824,7 @@
+             target_os = "emscripten",
+             target_os = "wasi",
+         )))]
++        #[cfg(not(target_os = "aros"))]
+         const COLLAPSE_RANGE = bitcast!(c::FALLOC_FL_COLLAPSE_RANGE);
+         /// `FALLOC_FL_ZERO_RANGE`
+         #[cfg(not(any(
+@@ -832,6 +836,7 @@
+             target_os = "emscripten",
+             target_os = "wasi",
+         )))]
++        #[cfg(not(target_os = "aros"))]
+         const ZERO_RANGE = bitcast!(c::FALLOC_FL_ZERO_RANGE);
+         /// `FALLOC_FL_INSERT_RANGE`
+         #[cfg(not(any(
+@@ -843,6 +848,7 @@
+             target_os = "emscripten",
+             target_os = "wasi",
+         )))]
++        #[cfg(not(target_os = "aros"))]
+         const INSERT_RANGE = bitcast!(c::FALLOC_FL_INSERT_RANGE);
+         /// `FALLOC_FL_UNSHARE_RANGE`
+         #[cfg(not(any(
+@@ -854,6 +860,7 @@
+             target_os = "emscripten",
+             target_os = "wasi",
+         )))]
++        #[cfg(not(target_os = "aros"))]
+         const UNSHARE_RANGE = bitcast!(c::FALLOC_FL_UNSHARE_RANGE);
+ 
+         /// <https://docs.rs/bitflags/*/bitflags/#externally-defined-flags>
+@@ -894,10 +901,12 @@
+ 
+         /// `ST_NOSUID`
+         #[cfg(not(any(target_os = "espidf", target_os = "haiku", target_os = "horizon", target_os = "redox", target_os = "vita")))]
++        #[cfg(not(target_os = "aros"))]
+         const NOSUID = c::ST_NOSUID as u64;
+ 
+         /// `ST_RDONLY`
+         #[cfg(not(any(target_os = "espidf", target_os = "haiku", target_os = "horizon", target_os = "redox", target_os = "vita")))]
++        #[cfg(not(target_os = "aros"))]
+         const RDONLY = c::ST_RDONLY as u64;
+ 
+         /// `ST_RELATIME`
+@@ -1066,6 +1075,7 @@
+     target_os = "wasi",
+ )))]
+ #[allow(clippy::module_name_repetitions)]
++#[cfg(not(target_os = "aros"))]
+ pub type StatFs = c::statfs;
+ 
+ /// `struct statfs` for use with [`statfs`] and [`fstatfs`].
+@@ -1073,6 +1083,7 @@
+ /// [`statfs`]: crate::fs::statfs
+ /// [`fstatfs`]: crate::fs::fstatfs
+ #[cfg(linux_like)]
++#[cfg(not(target_os = "aros"))]
+ pub type StatFs = c::statfs64;
+ 
+ /// `fsid_t` for use with [`StatFs`].
+@@ -1087,6 +1098,7 @@
+     target_os = "vita",
+     target_os = "wasi",
+ )))]
++#[cfg(not(target_os = "aros"))]
+ pub type Fsid = c::fsid_t;
+ 
+ /// `struct statvfs` for use with [`statvfs`] and [`fstatvfs`].
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/io/errno.rs b/src/backend/libc/io/errno.rs
+--- a/src/backend/libc/io/errno.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/io/errno.rs	2026-10-25 02:03:03
+@@ -57,6 +57,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const ADV: Self = Self(c::EADV);
+     /// `EAFNOSUPPORT`
+     #[cfg(not(target_os = "l4re"))]
+@@ -82,6 +83,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const BADE: Self = Self(c::EBADE);
+     /// `EBADF`
+     pub const BADF: Self = Self(c::EBADF);
+@@ -98,6 +100,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const BADFD: Self = Self(c::EBADFD);
+     /// `EBADMSG`
+     #[cfg(not(any(windows, target_os = "l4re")))]
+@@ -115,6 +118,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const BADR: Self = Self(c::EBADR);
+     /// `EBADRPC`
+     #[cfg(bsd)]
+@@ -132,6 +136,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const BADRQC: Self = Self(c::EBADRQC);
+     /// `EBADSLT`
+     #[cfg(not(any(
+@@ -146,6 +151,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const BADSLT: Self = Self(c::EBADSLT);
+     /// `EBFONT`
+     #[cfg(not(any(
+@@ -160,6 +166,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const BFONT: Self = Self(c::EBFONT);
+     /// `EBUSY`
+     #[cfg(not(windows))]
+@@ -185,6 +192,7 @@
+         target_os = "vita",
+         target_os = "wasi"
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const CHRNG: Self = Self(c::ECHRNG);
+     /// `ECOMM`
+     #[cfg(not(any(
+@@ -199,6 +207,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const COMM: Self = Self(c::ECOMM);
+     /// `ECONNABORTED`
+     pub const CONNABORTED: Self = Self(c::ECONNABORTED);
+@@ -222,6 +231,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const DEADLOCK: Self = Self(c::EDEADLOCK);
+     /// `EDESTADDRREQ`
+     #[cfg(not(target_os = "l4re"))]
+@@ -250,6 +260,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const DOTDOT: Self = Self(c::EDOTDOT);
+     /// `EDQUOT`
+     pub const DQUOT: Self = Self(c::EDQUOT);
+@@ -287,6 +298,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const HWPOISON: Self = Self(c::EHWPOISON);
+     /// `EIDRM`
+     #[cfg(not(any(windows, target_os = "l4re")))]
+@@ -337,6 +349,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const ISNAM: Self = Self(c::EISNAM);
+     /// `EKEYEXPIRED`
+     #[cfg(not(any(
+@@ -354,6 +367,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const KEYEXPIRED: Self = Self(c::EKEYEXPIRED);
+     /// `EKEYREJECTED`
+     #[cfg(not(any(
+@@ -371,6 +385,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const KEYREJECTED: Self = Self(c::EKEYREJECTED);
+     /// `EKEYREVOKED`
+     #[cfg(not(any(
+@@ -388,6 +403,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const KEYREVOKED: Self = Self(c::EKEYREVOKED);
+     /// `EL2HLT`
+     #[cfg(not(any(
+@@ -401,6 +417,7 @@
+         target_os = "vita",
+         target_os = "wasi"
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const L2HLT: Self = Self(c::EL2HLT);
+     /// `EL2NSYNC`
+     #[cfg(not(any(
+@@ -414,6 +431,7 @@
+         target_os = "vita",
+         target_os = "wasi"
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const L2NSYNC: Self = Self(c::EL2NSYNC);
+     /// `EL3HLT`
+     #[cfg(not(any(
+@@ -427,6 +445,7 @@
+         target_os = "vita",
+         target_os = "wasi"
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const L3HLT: Self = Self(c::EL3HLT);
+     /// `EL3RST`
+     #[cfg(not(any(
+@@ -440,6 +459,7 @@
+         target_os = "vita",
+         target_os = "wasi"
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const L3RST: Self = Self(c::EL3RST);
+     /// `ELIBACC`
+     #[cfg(not(any(
+@@ -454,6 +474,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const LIBACC: Self = Self(c::ELIBACC);
+     /// `ELIBBAD`
+     #[cfg(not(any(
+@@ -468,6 +489,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const LIBBAD: Self = Self(c::ELIBBAD);
+     /// `ELIBEXEC`
+     #[cfg(not(any(
+@@ -481,6 +503,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const LIBEXEC: Self = Self(c::ELIBEXEC);
+     /// `ELIBMAX`
+     #[cfg(not(any(
+@@ -495,6 +518,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const LIBMAX: Self = Self(c::ELIBMAX);
+     /// `ELIBSCN`
+     #[cfg(not(any(
+@@ -509,6 +533,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const LIBSCN: Self = Self(c::ELIBSCN);
+     /// `ELNRNG`
+     #[cfg(not(any(
+@@ -522,6 +547,7 @@
+         target_os = "vita",
+         target_os = "wasi"
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const LNRNG: Self = Self(c::ELNRNG);
+     /// `ELOOP`
+     pub const LOOP: Self = Self(c::ELOOP);
+@@ -541,6 +567,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const MEDIUMTYPE: Self = Self(c::EMEDIUMTYPE);
+     /// `EMFILE`
+     pub const MFILE: Self = Self(c::EMFILE);
+@@ -571,6 +598,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const NAVAIL: Self = Self(c::ENAVAIL);
+     /// `ENEEDAUTH`
+     #[cfg(bsd)]
+@@ -598,6 +626,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const NOANO: Self = Self(c::ENOANO);
+     /// `ENOATTR`
+     #[cfg(any(bsd, target_os = "haiku"))]
+@@ -617,6 +646,7 @@
+         target_os = "vita",
+         target_os = "wasi"
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const NOCSI: Self = Self(c::ENOCSI);
+     /// `ENODATA`
+     #[cfg(not(any(
+@@ -652,6 +682,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const NOKEY: Self = Self(c::ENOKEY);
+     /// `ENOLCK`
+     #[cfg(not(any(windows, target_os = "l4re")))]
+@@ -674,6 +705,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const NOMEDIUM: Self = Self(c::ENOMEDIUM);
+     /// `ENOMEM`
+     #[cfg(not(windows))]
+@@ -697,6 +729,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const NONET: Self = Self(c::ENONET);
+     /// `ENOPKG`
+     #[cfg(not(any(
+@@ -711,6 +744,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const NOPKG: Self = Self(c::ENOPKG);
+     /// `ENOPROTOOPT`
+     #[cfg(not(target_os = "l4re"))]
+@@ -777,6 +811,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const NOTNAM: Self = Self(c::ENOTNAM);
+     /// `ENOTRECOVERABLE`
+     #[cfg(not(any(
+@@ -786,6 +821,7 @@
+         target_os = "haiku",
+         target_os = "l4re"
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const NOTRECOVERABLE: Self = Self(c::ENOTRECOVERABLE);
+     /// `ENOTSOCK`
+     #[cfg(not(target_os = "l4re"))]
+@@ -809,6 +845,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const NOTUNIQ: Self = Self(c::ENOTUNIQ);
+     /// `ENXIO`
+     #[cfg(not(windows))]
+@@ -826,6 +863,7 @@
+         target_os = "haiku",
+         target_os = "l4re"
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const OWNERDEAD: Self = Self(c::EOWNERDEAD);
+     /// `EPERM`
+     #[cfg(not(windows))]
+@@ -879,6 +917,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const REMCHG: Self = Self(c::EREMCHG);
+     /// `EREMOTE`
+     #[cfg(not(any(
+@@ -889,6 +928,7 @@
+         target_os = "vita",
+         target_os = "wasi"
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const REMOTE: Self = Self(c::EREMOTE);
+     /// `EREMOTEIO`
+     #[cfg(not(any(
+@@ -906,6 +946,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const REMOTEIO: Self = Self(c::EREMOTEIO);
+     /// `ERESTART`
+     #[cfg(not(any(
+@@ -939,6 +980,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const RFKILL: Self = Self(c::ERFKILL);
+     /// `EROFS`
+     #[cfg(not(windows))]
+@@ -984,6 +1026,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const SRMNT: Self = Self(c::ESRMNT);
+     /// `ESTALE`
+     pub const STALE: Self = Self(c::ESTALE);
+@@ -1000,6 +1043,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const STRPIPE: Self = Self(c::ESTRPIPE);
+     /// `ETIME`
+     #[cfg(not(any(
+@@ -1018,6 +1062,7 @@
+     pub const TOOBIG: Self = Self(c::E2BIG);
+     /// `ETOOMANYREFS`
+     #[cfg(not(any(target_os = "haiku", target_os = "l4re", target_os = "wasi")))]
++    #[cfg(not(target_os = "aros"))]
+     pub const TOOMANYREFS: Self = Self(c::ETOOMANYREFS);
+     /// `ETXTBSY`
+     #[cfg(not(windows))]
+@@ -1038,6 +1083,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const UCLEAN: Self = Self(c::EUCLEAN);
+     /// `EUNATCH`
+     #[cfg(not(any(
+@@ -1051,6 +1097,7 @@
+         target_os = "vita",
+         target_os = "wasi"
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const UNATCH: Self = Self(c::EUNATCH);
+     /// `EUSERS`
+     #[cfg(not(any(
+@@ -1080,6 +1127,7 @@
+         target_os = "vita",
+         target_os = "wasi",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const XFULL: Self = Self(c::EXFULL);
+ }
+ 
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/io/syscalls.rs b/src/backend/libc/io/syscalls.rs
+--- a/src/backend/libc/io/syscalls.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/io/syscalls.rs	2026-10-25 02:03:03
+@@ -72,6 +72,10 @@
+ 
+ #[cfg(not(any(target_os = "espidf", target_os = "horizon")))]
+ pub(crate) fn readv(fd: BorrowedFd<'_>, bufs: &mut [IoSliceMut<'_>]) -> io::Result<usize> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     unsafe {
+         ret_usize(c::readv(
+             borrowed_fd(fd),
+@@ -79,10 +83,16 @@
+             min(bufs.len(), MAX_IOV) as c::c_int,
+         ))
+     }
++
++    }
+ }
+ 
+ #[cfg(not(any(target_os = "espidf", target_os = "horizon")))]
+ pub(crate) fn writev(fd: BorrowedFd<'_>, bufs: &[IoSlice<'_>]) -> io::Result<usize> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     unsafe {
+         ret_usize(c::writev(
+             borrowed_fd(fd),
+@@ -90,6 +100,8 @@
+             min(bufs.len(), MAX_IOV) as c::c_int,
+         ))
+     }
++
++    }
+ }
+ 
+ #[cfg(not(any(
+@@ -107,6 +119,10 @@
+     bufs: &mut [IoSliceMut<'_>],
+     offset: u64,
+ ) -> io::Result<usize> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     // Silently cast; we'll get `EINVAL` if the value is negative.
+     let offset = offset as i64;
+ 
+@@ -121,6 +137,8 @@
+             offset,
+         ))
+     }
++
++    }
+ }
+ 
+ #[cfg(not(any(
+@@ -134,6 +152,10 @@
+     target_os = "vita",
+ )))]
+ pub(crate) fn pwritev(fd: BorrowedFd<'_>, bufs: &[IoSlice<'_>], offset: u64) -> io::Result<usize> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     // Silently cast; we'll get `EINVAL` if the value is negative.
+     let offset = offset as i64;
+ 
+@@ -148,6 +170,8 @@
+             offset,
+         ))
+     }
++
++    }
+ }
+ 
+ #[cfg(all(linux_kernel, not(target_os = "android")))]
+@@ -278,12 +302,18 @@
+     target_os = "wasi",
+ )))]
+ pub(crate) fn dup3(fd: BorrowedFd<'_>, new: &mut OwnedFd, flags: DupFlags) -> io::Result<()> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     unsafe {
+         ret_discarded_fd(c::dup3(
+             borrowed_fd(fd),
+             borrowed_fd(new.as_fd()),
+             bitflags_bits!(flags),
+         ))
++    }
++
+     }
+ }
+ 
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/mod.rs b/src/backend/libc/mod.rs
+--- a/src/backend/libc/mod.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/mod.rs	2026-10-25 02:03:03
+@@ -153,7 +153,9 @@
+ #[cfg(feature = "system")]
+ pub(crate) mod system;
+ #[cfg(not(any(windows, target_os = "horizon", target_os = "vita")))]
++// Gated off on AROS alongside the public `termios` module (no tty layer).
+ #[cfg(feature = "termios")]
++#[cfg(not(target_os = "aros"))]
+ pub(crate) mod termios;
+ #[cfg(not(windows))]
+ #[cfg(feature = "thread")]
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/net/addr.rs b/src/backend/libc/net/addr.rs
+--- a/src/backend/libc/net/addr.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/net/addr.rs	2026-10-25 02:03:03
+@@ -22,7 +22,7 @@
+ #[doc(alias = "sockaddr_un")]
+ pub struct SocketAddrUnix {
+     pub(crate) unix: c::sockaddr_un,
+-    #[cfg(not(any(bsd, target_os = "haiku")))]
++    #[cfg(not(any(bsd, target_os = "aros", target_os = "haiku")))]
+     len: c::socklen_t,
+ }
+ 
+@@ -48,14 +48,14 @@
+             unix.sun_path[i] = *b as c::c_char;
+         }
+ 
+-        #[cfg(any(bsd, target_os = "haiku"))]
++        #[cfg(any(bsd, target_os = "aros", target_os = "haiku"))]
+         {
+             unix.sun_len = (offsetof_sun_path() + bytes.len()).try_into().unwrap();
+         }
+ 
+         Ok(Self {
+             unix,
+-            #[cfg(not(any(bsd, target_os = "haiku")))]
++            #[cfg(not(any(bsd, target_os = "aros", target_os = "haiku")))]
+             len: (offsetof_sun_path() + bytes.len()).try_into().unwrap(),
+         })
+     }
+@@ -76,7 +76,7 @@
+         let len = len.try_into().unwrap();
+         Ok(Self {
+             unix,
+-            #[cfg(not(any(bsd, target_os = "haiku")))]
++            #[cfg(not(any(bsd, target_os = "aros", target_os = "haiku")))]
+             len,
+         })
+     }
+@@ -96,7 +96,7 @@
+     pub fn new_unnamed() -> Self {
+         Self {
+             unix: Self::init(),
+-            #[cfg(not(any(bsd, target_os = "haiku")))]
++            #[cfg(not(any(bsd, target_os = "aros", target_os = "haiku")))]
+             len: offsetof_sun_path() as c::socklen_t,
+         }
+     }
+@@ -105,6 +105,7 @@
+         c::sockaddr_un {
+             #[cfg(any(
+                 bsd,
++                target_os = "aros",
+                 target_os = "aix",
+                 target_os = "haiku",
+                 target_os = "horizon",
+@@ -115,10 +116,11 @@
+             #[cfg(target_os = "vita")]
+             ss_len: 0,
+             sun_family: c::AF_UNIX as _,
+-            #[cfg(any(bsd, target_os = "horizon", target_os = "nto"))]
++            #[cfg(any(bsd, target_os = "aros", target_os = "horizon", target_os = "nto"))]
+             sun_path: [0; 104],
+             #[cfg(not(any(
+                 bsd,
++                target_os = "aros",
+                 target_os = "aix",
+                 target_os = "haiku",
+                 target_os = "horizon",
+@@ -206,11 +208,11 @@
+ 
+     #[inline]
+     pub(crate) fn addr_len(&self) -> SocketAddrLen {
+-        #[cfg(not(any(bsd, target_os = "haiku")))]
++        #[cfg(not(any(bsd, target_os = "aros", target_os = "haiku")))]
+         {
+             bitcast!(self.len)
+         }
+-        #[cfg(any(bsd, target_os = "haiku"))]
++        #[cfg(any(bsd, target_os = "aros", target_os = "haiku"))]
+         {
+             bitcast!(c::socklen_t::from(self.unix.sun_len))
+         }
+@@ -342,6 +344,7 @@
+     let z = c::sockaddr_un {
+         #[cfg(any(
+             bsd,
++            target_os = "aros",
+             target_os = "aix",
+             target_os = "haiku",
+             target_os = "horizon",
+@@ -353,6 +356,7 @@
+         ss_len: 0,
+         #[cfg(any(
+             bsd,
++            target_os = "aros",
+             target_os = "aix",
+             target_os = "espidf",
+             target_os = "haiku",
+@@ -363,6 +367,7 @@
+         sun_family: 0_u8,
+         #[cfg(not(any(
+             bsd,
++            target_os = "aros",
+             target_os = "aix",
+             target_os = "espidf",
+             target_os = "haiku",
+@@ -371,10 +376,11 @@
+             target_os = "vita"
+         )))]
+         sun_family: 0_u16,
+-        #[cfg(any(bsd, target_os = "horizon", target_os = "nto"))]
++        #[cfg(any(bsd, target_os = "aros", target_os = "horizon", target_os = "nto"))]
+         sun_path: [0; 104],
+         #[cfg(not(any(
+             bsd,
++            target_os = "aros",
+             target_os = "aix",
+             target_os = "haiku",
+             target_os = "horizon",
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/net/ext.rs b/src/backend/libc/net/ext.rs
+--- a/src/backend/libc/net/ext.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/net/ext.rs	2026-10-25 02:03:03
+@@ -80,6 +80,7 @@
+ pub(crate) const fn sockaddr_in6_new(
+     #[cfg(any(
+         bsd,
++        target_os = "aros",
+         target_os = "aix",
+         target_os = "espidf",
+         target_os = "haiku",
+@@ -97,6 +98,7 @@
+     c::sockaddr_in6 {
+         #[cfg(any(
+             bsd,
++            target_os = "aros",
+             target_os = "aix",
+             target_os = "espidf",
+             target_os = "haiku",
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/net/msghdr.rs b/src/backend/libc/net/msghdr.rs
+--- a/src/backend/libc/net/msghdr.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/net/msghdr.rs	2026-10-25 02:03:03
+@@ -50,6 +50,7 @@
+ /// Convert the value to a `socklen_t`.
+ #[cfg(any(
+     bsd,
++    target_os = "aros",
+     solarish,
+     target_env = "musl",
+     target_os = "aix",
+@@ -68,6 +69,7 @@
+ /// Convert the value to a `size_t`.
+ #[cfg(not(any(
+     bsd,
++    target_os = "aros",
+     solarish,
+     windows,
+     target_env = "musl",
+@@ -174,7 +176,7 @@
+ }
+ 
+ /// Create a zero-initialized message header struct value.
+-#[cfg(unix)]
++#[cfg(any(unix, target_os = "aros"))]
+ pub(crate) fn zero_msghdr() -> c::msghdr {
+     // SAFETY: We can't initialize all the fields by value because on some
+     // platforms the `msghdr` struct in the libc crate contains private padding
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/net/read_sockaddr.rs b/src/backend/libc/net/read_sockaddr.rs
+--- a/src/backend/libc/net/read_sockaddr.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/net/read_sockaddr.rs	2026-10-25 02:03:03
+@@ -21,6 +21,7 @@
+ pub(crate) struct sockaddr_header {
+     #[cfg(any(
+         bsd,
++        target_os = "aros",
+         target_os = "aix",
+         target_os = "espidf",
+         target_os = "haiku",
+@@ -30,6 +31,7 @@
+     sa_len: u8,
+     #[cfg(any(
+         bsd,
++        target_os = "aros",
+         target_os = "aix",
+         target_os = "espidf",
+         target_os = "haiku",
+@@ -39,6 +41,7 @@
+     sa_family: u8,
+     #[cfg(not(any(
+         bsd,
++        target_os = "aros",
+         target_os = "aix",
+         target_os = "espidf",
+         target_os = "haiku",
+@@ -59,6 +62,7 @@
+     let _ = c::sockaddr {
+         #[cfg(any(
+             bsd,
++            target_os = "aros",
+             target_os = "aix",
+             target_os = "espidf",
+             target_os = "haiku",
+@@ -69,6 +73,7 @@
+         sa_len: 0_u8,
+         #[cfg(any(
+             bsd,
++            target_os = "aros",
+             target_os = "aix",
+             target_os = "espidf",
+             target_os = "haiku",
+@@ -79,6 +84,7 @@
+         sa_family: 0_u8,
+         #[cfg(not(any(
+             bsd,
++            target_os = "aros",
+             target_os = "aix",
+             target_os = "espidf",
+             target_os = "haiku",
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/net/send_recv.rs b/src/backend/libc/net/send_recv.rs
+--- a/src/backend/libc/net/send_recv.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/net/send_recv.rs	2026-10-25 02:03:03
+@@ -25,6 +25,7 @@
+             target_os = "redox",
+             target_os = "vita",
+         )))]
++        #[cfg(not(target_os = "aros"))]
+         const CONFIRM = bitcast!(c::MSG_CONFIRM);
+         /// `MSG_DONTROUTE`
+         const DONTROUTE = bitcast!(c::MSG_DONTROUTE);
+@@ -47,6 +48,7 @@
+             target_os = "redox",
+             target_os = "vita",
+         )))]
++        #[cfg(not(target_os = "aros"))]
+         const MORE = bitcast!(c::MSG_MORE);
+         #[cfg(not(any(apple, windows, target_os = "redox", target_os = "vita")))]
+         /// `MSG_NOSIGNAL`
+@@ -100,6 +102,7 @@
+             target_os = "redox",
+             target_os = "vita",
+         )))]
++        #[cfg(not(target_os = "aros"))]
+         const ERRQUEUE = bitcast!(c::MSG_ERRQUEUE);
+         /// `MSG_OOB`
+         const OOB = bitcast!(c::MSG_OOB);
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/net/syscalls.rs b/src/backend/libc/net/syscalls.rs
+--- a/src/backend/libc/net/syscalls.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/net/syscalls.rs	2026-10-25 02:03:03
+@@ -293,6 +293,10 @@
+     target_os = "vita",
+ )))]
+ pub(crate) fn accept_with(sockfd: BorrowedFd<'_>, flags: SocketFlags) -> io::Result<OwnedFd> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     unsafe {
+         let owned_fd = ret_owned_fd(c::accept4(
+             borrowed_fd(sockfd),
+@@ -302,6 +306,8 @@
+         ))?;
+         Ok(owned_fd)
+     }
++
++    }
+ }
+ 
+ pub(crate) fn acceptfrom(sockfd: BorrowedFd<'_>) -> io::Result<(OwnedFd, Option<SocketAddrAny>)> {
+@@ -331,6 +337,10 @@
+     sockfd: BorrowedFd<'_>,
+     flags: SocketFlags,
+ ) -> io::Result<(OwnedFd, Option<SocketAddrAny>)> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     unsafe {
+         let mut addr = SocketAddrBuf::new();
+         let owned_fd = ret_owned_fd(c::accept4(
+@@ -340,6 +350,8 @@
+             flags.bits() as c::c_int,
+         ))?;
+         Ok((owned_fd, addr.into_any_option()))
++    }
++
+     }
+ }
+ 
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/net/write_sockaddr.rs b/src/backend/libc/net/write_sockaddr.rs
+--- a/src/backend/libc/net/write_sockaddr.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/net/write_sockaddr.rs	2026-10-25 02:03:03
+@@ -9,6 +9,7 @@
+     c::sockaddr_in {
+         #[cfg(any(
+             bsd,
++            target_os = "aros",
+             target_os = "aix",
+             target_os = "espidf",
+             target_os = "haiku",
+@@ -34,6 +35,7 @@
+ pub(crate) fn encode_sockaddr_v6(v6: &SocketAddrV6) -> c::sockaddr_in6 {
+     #[cfg(any(
+         bsd,
++        target_os = "aros",
+         target_os = "aix",
+         target_os = "espidf",
+         target_os = "haiku",
+@@ -53,6 +55,7 @@
+     }
+     #[cfg(not(any(
+         bsd,
++        target_os = "aros",
+         target_os = "aix",
+         target_os = "espidf",
+         target_os = "haiku",
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/pipe/syscalls.rs b/src/backend/libc/pipe/syscalls.rs
+--- a/src/backend/libc/pipe/syscalls.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/pipe/syscalls.rs	2026-10-25 02:03:03
+@@ -42,6 +42,10 @@
+     target_os = "wasi"
+ )))]
+ pub(crate) fn pipe_with(flags: PipeFlags) -> io::Result<(OwnedFd, OwnedFd)> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     unsafe {
+         let mut result = MaybeUninit::<[OwnedFd; 2]>::uninit();
+         ret(c::pipe2(
+@@ -50,6 +54,8 @@
+         ))?;
+         let [p0, p1] = result.assume_init();
+         Ok((p0, p1))
++    }
++
+     }
+ }
+ 
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/pipe/types.rs b/src/backend/libc/pipe/types.rs
+--- a/src/backend/libc/pipe/types.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/pipe/types.rs	2026-10-25 02:03:03
+@@ -27,6 +27,7 @@
+             target_os = "redox",
+             target_os = "vita",
+         )))]
++        #[cfg(not(target_os = "aros"))]
+         const DIRECT = bitcast!(c::O_DIRECT);
+         /// `O_NONBLOCK`
+         const NONBLOCK = bitcast!(c::O_NONBLOCK);
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/process/syscalls.rs b/src/backend/libc/process/syscalls.rs
+--- a/src/backend/libc/process/syscalls.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/process/syscalls.rs	2026-10-25 02:03:03
+@@ -107,7 +107,7 @@
+ #[must_use]
+ pub(crate) fn getppid() -> Option<Pid> {
+     unsafe {
+-        let pid: i32 = c::getppid();
++        let pid: RawPid = c::getppid();
+         Pid::from_raw(pid)
+     }
+ }
+@@ -165,6 +165,10 @@
+ )))]
+ #[inline]
+ pub(crate) fn getpriority_user(uid: Uid) -> io::Result<i32> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     libc_errno::set_errno(libc_errno::Errno(0));
+     let r = unsafe { c::getpriority(c::PRIO_USER, uid.as_raw() as _) };
+     if libc_errno::errno().0 != 0 {
+@@ -172,6 +176,8 @@
+     } else {
+         Ok(r)
+     }
++
++    }
+ }
+ 
+ #[cfg(not(any(
+@@ -183,6 +189,10 @@
+ )))]
+ #[inline]
+ pub(crate) fn getpriority_pgrp(pgid: Option<Pid>) -> io::Result<i32> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     libc_errno::set_errno(libc_errno::Errno(0));
+     let r = unsafe { c::getpriority(c::PRIO_PGRP, Pid::as_raw(pgid) as _) };
+     if libc_errno::errno().0 != 0 {
+@@ -190,6 +200,8 @@
+     } else {
+         Ok(r)
+     }
++
++    }
+ }
+ 
+ #[cfg(not(any(
+@@ -201,6 +213,10 @@
+ )))]
+ #[inline]
+ pub(crate) fn getpriority_process(pid: Option<Pid>) -> io::Result<i32> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     libc_errno::set_errno(libc_errno::Errno(0));
+     let r = unsafe { c::getpriority(c::PRIO_PROCESS, Pid::as_raw(pid) as _) };
+     if libc_errno::errno().0 != 0 {
+@@ -208,6 +224,8 @@
+     } else {
+         Ok(r)
+     }
++
++    }
+ }
+ 
+ #[cfg(not(any(
+@@ -219,7 +237,13 @@
+ )))]
+ #[inline]
+ pub(crate) fn setpriority_user(uid: Uid, priority: i32) -> io::Result<()> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     unsafe { ret(c::setpriority(c::PRIO_USER, uid.as_raw() as _, priority)) }
++
++    }
+ }
+ 
+ #[cfg(not(any(
+@@ -231,6 +255,10 @@
+ )))]
+ #[inline]
+ pub(crate) fn setpriority_pgrp(pgid: Option<Pid>, priority: i32) -> io::Result<()> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     unsafe {
+         ret(c::setpriority(
+             c::PRIO_PGRP,
+@@ -238,6 +266,8 @@
+             priority,
+         ))
+     }
++
++    }
+ }
+ 
+ #[cfg(not(any(
+@@ -249,6 +279,10 @@
+ )))]
+ #[inline]
+ pub(crate) fn setpriority_process(pid: Option<Pid>, priority: i32) -> io::Result<()> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     unsafe {
+         ret(c::setpriority(
+             c::PRIO_PROCESS,
+@@ -256,6 +290,8 @@
+             priority,
+         ))
+     }
++
++    }
+ }
+ 
+ #[cfg(not(any(
+@@ -379,7 +415,7 @@
+ ) -> io::Result<Option<(Pid, WaitStatus)>> {
+     unsafe {
+         let mut status: c::c_int = 0;
+-        let pid = ret_c_int(c::waitpid(pid as _, &mut status, waitopts.bits() as _))?;
++        let pid = ret_pid_t(c::waitpid(pid as _, &mut status, waitopts.bits() as _))?;
+         Ok(Pid::from_raw(pid).map(|pid| (pid, WaitStatus::new(status as _))))
+     }
+ }
+@@ -418,6 +454,10 @@
+ )))]
+ #[inline]
+ fn _waitid_all(options: WaitIdOptions) -> io::Result<Option<WaitIdStatus>> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     // `waitid` can return successfully without initializing the struct (no
+     // children found when using `WNOHANG`)
+     let mut status = MaybeUninit::<c::siginfo_t>::zeroed();
+@@ -431,6 +471,8 @@
+     };
+ 
+     Ok(unsafe { cvt_waitid_status(status) })
++
++    }
+ }
+ 
+ #[cfg(not(any(
+@@ -444,6 +486,10 @@
+ )))]
+ #[inline]
+ fn _waitid_pid(pid: Pid, options: WaitIdOptions) -> io::Result<Option<WaitIdStatus>> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     // `waitid` can return successfully without initializing the struct (no
+     // children found when using `WNOHANG`)
+     let mut status = MaybeUninit::<c::siginfo_t>::zeroed();
+@@ -457,6 +503,8 @@
+     };
+ 
+     Ok(unsafe { cvt_waitid_status(status) })
++
++    }
+ }
+ 
+ #[cfg(not(any(
+@@ -470,6 +518,10 @@
+ )))]
+ #[inline]
+ fn _waitid_pgid(pgid: Option<Pid>, options: WaitIdOptions) -> io::Result<Option<WaitIdStatus>> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     // `waitid` can return successfully without initializing the struct (no
+     // children found when using `WNOHANG`)
+     let mut status = MaybeUninit::<c::siginfo_t>::zeroed();
+@@ -483,6 +535,8 @@
+     };
+ 
+     Ok(unsafe { cvt_waitid_status(status) })
++
++    }
+ }
+ 
+ #[cfg(target_os = "linux")]
+@@ -548,7 +602,7 @@
+ #[inline]
+ pub(crate) fn setsid() -> io::Result<Pid> {
+     unsafe {
+-        let pid = ret_c_int(c::setsid())?;
++        let pid = ret_pid_t(c::setsid())?;
+         Ok(Pid::from_raw_unchecked(pid))
+     }
+ }
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/process/types.rs b/src/backend/libc/process/types.rs
+--- a/src/backend/libc/process/types.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/process/types.rs	2026-10-25 02:03:03
+@@ -46,14 +46,17 @@
+         target_os = "haiku",
+         target_os = "nto",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     Rss = bitcast!(c::RLIMIT_RSS),
+     /// `RLIMIT_NPROC`
+     #[cfg(not(any(solarish, target_os = "cygwin", target_os = "haiku")))]
++    #[cfg(not(target_os = "aros"))]
+     Nproc = bitcast!(c::RLIMIT_NPROC),
+     /// `RLIMIT_NOFILE`
+     Nofile = bitcast!(c::RLIMIT_NOFILE),
+     /// `RLIMIT_MEMLOCK`
+     #[cfg(not(any(solarish, target_os = "aix", target_os = "cygwin", target_os = "haiku")))]
++    #[cfg(not(target_os = "aros"))]
+     Memlock = bitcast!(c::RLIMIT_MEMLOCK),
+     /// `RLIMIT_AS`
+     #[cfg(not(target_os = "openbsd"))]
+@@ -68,6 +71,7 @@
+         target_os = "hurd",
+         target_os = "nto",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     Locks = bitcast!(c::RLIMIT_LOCKS),
+     /// `RLIMIT_SIGPENDING`
+     #[cfg(not(any(
+@@ -79,6 +83,7 @@
+         target_os = "hurd",
+         target_os = "nto",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     Sigpending = bitcast!(c::RLIMIT_SIGPENDING),
+     /// `RLIMIT_MSGQUEUE`
+     #[cfg(not(any(
+@@ -90,6 +95,7 @@
+         target_os = "hurd",
+         target_os = "nto",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     Msgqueue = bitcast!(c::RLIMIT_MSGQUEUE),
+     /// `RLIMIT_NICE`
+     #[cfg(not(any(
+@@ -101,6 +107,7 @@
+         target_os = "hurd",
+         target_os = "nto",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     Nice = bitcast!(c::RLIMIT_NICE),
+     /// `RLIMIT_RTPRIO`
+     #[cfg(not(any(
+@@ -112,6 +119,7 @@
+         target_os = "hurd",
+         target_os = "nto",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     Rtprio = bitcast!(c::RLIMIT_RTPRIO),
+     /// `RLIMIT_RTTIME`
+     #[cfg(not(any(
+@@ -125,6 +133,7 @@
+         target_os = "hurd",
+         target_os = "nto",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     Rttime = bitcast!(c::RLIMIT_RTTIME),
+ }
+ 
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/process/wait.rs b/src/backend/libc/process/wait.rs
+--- a/src/backend/libc/process/wait.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/process/wait.rs	2026-10-25 02:03:03
+@@ -5,7 +5,9 @@
+ };
+ 
+ #[cfg(not(target_os = "horizon"))]
+-pub(crate) use c::{WCONTINUED, WUNTRACED};
++#[cfg(not(target_os = "aros"))]
++pub(crate) use c::WCONTINUED;
++pub(crate) use c::WUNTRACED;
+ 
+ #[cfg(not(any(
+     target_os = "cygwin",
+@@ -14,4 +16,5 @@
+     target_os = "redox",
+     target_os = "wasi",
+ )))]
++#[cfg(not(target_os = "aros"))]
+ pub(crate) use c::{WEXITED, WNOWAIT, WSTOPPED};
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/time/syscalls.rs b/src/backend/libc/time/syscalls.rs
+--- a/src/backend/libc/time/syscalls.rs	2026-10-25 02:03:03
++++ b/src/backend/libc/time/syscalls.rs	2026-10-25 02:03:03
+@@ -56,6 +56,7 @@
+ #[cfg(not(any(target_os = "redox", target_os = "wasi")))]
+ #[inline]
+ #[must_use]
++#[cfg(not(target_os = "aros"))]
+ pub(crate) fn clock_getres(id: ClockId) -> Timespec {
+     // Old 32-bit version: libc has `clock_getres` but it is not y2038 safe by
+     // default. But there may be a `__clock_getres64` we can use.
+@@ -265,6 +266,10 @@
+ )))]
+ #[inline]
+ pub(crate) fn clock_settime(id: ClockId, timespec: Timespec) -> io::Result<()> {
++    #[cfg(target_os = "aros")]
++    { Err(crate::io::Errno::NOSYS) }
++    #[cfg(not(target_os = "aros"))]
++    {
+     // Old 32-bit version: libc has `clock_gettime` but it is not y2038 safe by
+     // default. But there may be a `__clock_settime64` we can use.
+     #[cfg(fix_y2038)]
+@@ -289,6 +294,8 @@
+             id as c::clockid_t,
+             as_libc_timespec_ptr(&timespec),
+         ))
++    }
++
+     }
+ }
+ 
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/event/mod.rs b/src/event/mod.rs
+--- a/src/event/mod.rs	2026-10-25 02:03:03
++++ b/src/event/mod.rs	2026-10-25 02:03:03
+@@ -11,7 +11,7 @@
+ mod eventfd;
+ #[cfg(bsd)]
+ pub mod kqueue;
+-#[cfg(not(any(windows, target_os = "redox", target_os = "wasi")))]
++#[cfg(not(any(windows, target_os = "redox", target_os = "wasi", target_os = "aros")))]
+ mod pause;
+ mod poll;
+ #[cfg(solarish)]
+@@ -27,7 +27,7 @@
+     target_os = "espidf"
+ ))]
+ pub use eventfd::{eventfd, EventfdFlags};
+-#[cfg(not(any(windows, target_os = "redox", target_os = "wasi")))]
++#[cfg(not(any(windows, target_os = "redox", target_os = "wasi", target_os = "aros")))]
+ pub use pause::*;
+ pub use poll::{poll, PollFd, PollFlags};
+ #[cfg(any(bsd, linux_kernel, windows, target_os = "wasi"))]
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/fs/abs.rs b/src/fs/abs.rs
+--- a/src/fs/abs.rs	2026-10-25 02:03:03
++++ b/src/fs/abs.rs	2026-10-25 02:03:03
+@@ -14,6 +14,7 @@
+     target_os = "vita",
+     target_os = "wasi",
+ )))]
++#[cfg(not(target_os = "aros"))]
+ use crate::fs::StatFs;
+ #[cfg(not(any(target_os = "wasi")))]
+ use crate::fs::StatVfs;
+@@ -266,6 +267,7 @@
+     target_os = "wasi",
+ )))]
+ #[inline]
++#[cfg(not(target_os = "aros"))]
+ pub fn statfs<P: path::Arg>(path: P) -> io::Result<StatFs> {
+     path.into_with_c_str(backend::fs::syscalls::statfs)
+ }
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/fs/at.rs b/src/fs/at.rs
+--- a/src/fs/at.rs	2026-10-25 02:03:03
++++ b/src/fs/at.rs	2026-10-25 02:03:03
+@@ -46,6 +46,7 @@
+     target_os = "redox",
+     target_os = "vita"
+ )))]
++#[cfg(not(target_os = "aros"))]
+ pub const UTIME_NOW: Nsecs = backend::c::UTIME_NOW as Nsecs;
+ 
+ /// `UTIME_OMIT` for use with [`utimensat`].
+@@ -57,6 +58,7 @@
+     target_os = "redox",
+     target_os = "vita"
+ )))]
++#[cfg(not(target_os = "aros"))]
+ pub const UTIME_OMIT: Nsecs = backend::c::UTIME_OMIT as Nsecs;
+ 
+ /// `openat(dirfd, path, oflags, mode)`—Opens a file.
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/fs/fd.rs b/src/fs/fd.rs
+--- a/src/fs/fd.rs	2026-10-25 02:03:03
++++ b/src/fs/fd.rs	2026-10-25 02:03:03
+@@ -39,6 +39,7 @@
+     target_os = "vita",
+     target_os = "wasi",
+ )))]
++#[cfg(not(target_os = "aros"))]
+ use backend::fs::types::StatFs;
+ #[cfg(not(target_os = "wasi"))]
+ use backend::fs::types::StatVfs;
+@@ -178,6 +179,7 @@
+     target_os = "wasi",
+ )))]
+ #[inline]
++#[cfg(not(target_os = "aros"))]
+ pub fn fstatfs<Fd: AsFd>(fd: Fd) -> io::Result<StatFs> {
+     backend::fs::syscalls::fstatfs(fd.as_fd())
+ }
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/fs/mod.rs b/src/fs/mod.rs
+--- a/src/fs/mod.rs	2026-10-25 02:03:03
++++ b/src/fs/mod.rs	2026-10-25 02:03:03
+@@ -40,6 +40,7 @@
+     target_os = "vita",
+     target_os = "wasi"
+ )))]
++#[cfg(not(target_os = "aros"))]
+ mod makedev;
+ #[cfg(any(linux_kernel, target_os = "freebsd"))]
+ mod memfd_create;
+@@ -103,6 +104,7 @@
+     target_os = "vita",
+     target_os = "wasi"
+ )))]
++#[cfg(not(target_os = "aros"))]
+ pub use makedev::*;
+ #[cfg(any(linux_kernel, target_os = "freebsd"))]
+ pub use memfd_create::memfd_create;
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/ioctl/mod.rs b/src/ioctl/mod.rs
+--- a/src/ioctl/mod.rs	2026-10-25 02:03:03
++++ b/src/ioctl/mod.rs	2026-10-25 02:03:03
+@@ -316,6 +316,7 @@
+ // BSD, Haiku, Hurd, Redox, and Vita use `unsigned long`.
+ #[cfg(any(
+     bsd,
++    target_os = "aros",
+     target_os = "redox",
+     target_os = "haiku",
+     target_os = "horizon",
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/lib.rs b/src/lib.rs
+--- a/src/lib.rs	2026-10-25 02:03:03
++++ b/src/lib.rs	2026-10-25 02:03:03
+@@ -295,7 +295,10 @@
+ #[cfg(not(any(windows, target_os = "wasi")))]
+ #[cfg_attr(docsrs, doc(cfg(feature = "system")))]
+ pub mod system;
+-#[cfg(not(any(windows, target_os = "horizon", target_os = "vita")))]
++// AROS has no tty/termios layer at all, and nothing in this tree calls into
++// it; compiling the module would only require ~130 constants that could never
++// do anything.
++#[cfg(not(any(windows, target_os = "horizon", target_os = "vita", target_os = "aros")))]
+ #[cfg(feature = "termios")]
+ #[cfg_attr(docsrs, doc(cfg(feature = "termios")))]
+ pub mod termios;
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/maybe_polyfill/std/mod.rs b/src/maybe_polyfill/std/mod.rs
+--- a/src/maybe_polyfill/std/mod.rs	2026-10-25 02:03:03
++++ b/src/maybe_polyfill/std/mod.rs	2026-10-25 02:03:03
+@@ -27,6 +27,8 @@
+         pub use std::os::unix::io::{
+             AsFd, AsRawFd, BorrowedFd, FromRawFd, IntoRawFd, OwnedFd, RawFd,
+         };
++        #[cfg(all(target_os = "aros", not(unix)))]
++        pub use std::os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, IntoRawFd, OwnedFd, RawFd};
+     }
+ 
+     #[cfg(windows)]
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/net/types.rs b/src/net/types.rs
+--- a/src/net/types.rs	2026-10-25 02:03:03
++++ b/src/net/types.rs	2026-10-25 02:03:03
+@@ -123,6 +123,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const AX25: Self = Self(c::AF_AX25 as _);
+     /// `AF_IPX`
+     #[cfg(not(any(
+@@ -157,6 +158,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const NETROM: Self = Self(c::AF_NETROM as _);
+     /// `AF_BRIDGE`
+     #[cfg(not(any(
+@@ -173,6 +175,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const BRIDGE: Self = Self(c::AF_BRIDGE as _);
+     /// `AF_ATMPVC`
+     #[cfg(not(any(
+@@ -189,6 +192,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const ATMPVC: Self = Self(c::AF_ATMPVC as _);
+     /// `AF_X25`
+     #[cfg(not(any(
+@@ -204,6 +208,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const X25: Self = Self(c::AF_X25 as _);
+     /// `AF_ROSE`
+     #[cfg(not(any(
+@@ -220,6 +225,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const ROSE: Self = Self(c::AF_ROSE as _);
+     /// `AF_DECnet`
+     #[cfg(not(any(
+@@ -245,6 +251,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const NETBEUI: Self = Self(c::AF_NETBEUI as _);
+     /// `AF_SECURITY`
+     #[cfg(not(any(
+@@ -261,6 +268,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const SECURITY: Self = Self(c::AF_SECURITY as _);
+     /// `AF_KEY`
+     #[cfg(not(any(
+@@ -276,6 +284,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const KEY: Self = Self(c::AF_KEY as _);
+     /// `AF_PACKET`
+     ///
+@@ -296,6 +305,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const PACKET: Self = Self(c::AF_PACKET as _);
+     /// `AF_ASH`
+     #[cfg(not(any(
+@@ -312,6 +322,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const ASH: Self = Self(c::AF_ASH as _);
+     /// `AF_ECONET`
+     #[cfg(not(any(
+@@ -328,6 +339,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const ECONET: Self = Self(c::AF_ECONET as _);
+     /// `AF_ATMSVC`
+     #[cfg(not(any(
+@@ -344,6 +356,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const ATMSVC: Self = Self(c::AF_ATMSVC as _);
+     /// `AF_RDS`
+     #[cfg(not(any(
+@@ -360,6 +373,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const RDS: Self = Self(c::AF_RDS as _);
+     /// `AF_SNA`
+     #[cfg(not(any(
+@@ -384,6 +398,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const IRDA: Self = Self(c::AF_IRDA as _);
+     /// `AF_PPPOX`
+     #[cfg(not(any(
+@@ -400,6 +415,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const PPPOX: Self = Self(c::AF_PPPOX as _);
+     /// `AF_WANPIPE`
+     #[cfg(not(any(
+@@ -416,6 +432,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const WANPIPE: Self = Self(c::AF_WANPIPE as _);
+     /// `AF_LLC`
+     #[cfg(not(any(
+@@ -432,6 +449,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const LLC: Self = Self(c::AF_LLC as _);
+     /// `AF_CAN`
+     #[cfg(not(any(
+@@ -448,6 +466,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const CAN: Self = Self(c::AF_CAN as _);
+     /// `AF_TIPC`
+     #[cfg(not(any(
+@@ -464,6 +483,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const TIPC: Self = Self(c::AF_TIPC as _);
+     /// `AF_BLUETOOTH`
+     #[cfg(not(any(
+@@ -494,6 +514,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const IUCV: Self = Self(c::AF_IUCV as _);
+     /// `AF_RXRPC`
+     #[cfg(not(any(
+@@ -510,6 +531,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const RXRPC: Self = Self(c::AF_RXRPC as _);
+     /// `AF_ISDN`
+     #[cfg(not(any(
+@@ -540,6 +562,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const PHONET: Self = Self(c::AF_PHONET as _);
+     /// `AF_IEEE802154`
+     #[cfg(not(any(
+@@ -556,6 +579,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const IEEE802154: Self = Self(c::AF_IEEE802154 as _);
+     /// `AF_802`
+     #[cfg(solarish)]
+@@ -816,6 +840,7 @@
+         target_os = "horizon",
+         target_os = "vita"
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const IGMP: Protocol = Protocol(new_raw_protocol(c::IPPROTO_IGMP as _));
+     /// `IPPROTO_IPIP`
+     #[cfg(not(any(
+@@ -827,6 +852,7 @@
+         target_os = "redox",
+         target_os = "vita"
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const IPIP: Protocol = Protocol(new_raw_protocol(c::IPPROTO_IPIP as _));
+     /// `IPPROTO_TCP`
+     pub const TCP: Protocol = Protocol(new_raw_protocol(c::IPPROTO_TCP as _));
+@@ -888,6 +914,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const DCCP: Protocol = Protocol(new_raw_protocol(c::IPPROTO_DCCP as _));
+     /// `IPPROTO_IPV6`
+     pub const IPV6: Protocol = Protocol(new_raw_protocol(c::IPPROTO_IPV6 as _));
+@@ -949,6 +976,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const MTP: Protocol = Protocol(new_raw_protocol(c::IPPROTO_MTP as _));
+     /// `IPPROTO_BEETPH`
+     #[cfg(not(any(
+@@ -964,6 +992,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const BEETPH: Protocol = Protocol(new_raw_protocol(c::IPPROTO_BEETPH as _));
+     /// `IPPROTO_ENCAP`
+     #[cfg(not(any(
+@@ -977,6 +1006,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const ENCAP: Protocol = Protocol(new_raw_protocol(c::IPPROTO_ENCAP as _));
+     /// `IPPROTO_PIM`
+     #[cfg(not(any(
+@@ -989,6 +1019,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const PIM: Protocol = Protocol(new_raw_protocol(c::IPPROTO_PIM as _));
+     /// `IPPROTO_COMP`
+     #[cfg(not(any(
+@@ -1004,6 +1035,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const COMP: Protocol = Protocol(new_raw_protocol(c::IPPROTO_COMP as _));
+     /// `IPPROTO_SCTP`
+     #[cfg(not(any(
+@@ -1051,6 +1083,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const MPLS: Protocol = Protocol(new_raw_protocol(c::IPPROTO_MPLS as _));
+     /// `IPPROTO_ETHERNET`
+     #[cfg(linux_kernel)]
+@@ -1074,6 +1107,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const MPTCP: Protocol = Protocol(new_raw_protocol(c::IPPROTO_MPTCP as _));
+     /// `IPPROTO_FRAGMENT`
+     #[cfg(not(any(
+@@ -1102,6 +1136,7 @@
+         target_os = "redox",
+         target_os = "vita",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const MH: Protocol = Protocol(new_raw_protocol(c::IPPROTO_MH as _));
+     /// `IPPROTO_ROUTING`
+     #[cfg(not(any(
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/path/arg.rs b/src/path/arg.rs
+--- a/src/path/arg.rs	2026-10-25 02:03:03
++++ b/src/path/arg.rs	2026-10-25 02:03:03
+@@ -19,6 +19,8 @@
+ use std::os::hermit::ext::ffi::{OsStrExt, OsStringExt};
+ #[cfg(all(feature = "std", unix))]
+ use std::os::unix::ffi::{OsStrExt as _, OsStringExt as _};
++#[cfg(all(feature = "std", target_os = "aros", not(unix)))]
++use std::os::unix::ffi::{OsStrExt as _, OsStringExt as _};
+ #[cfg(all(feature = "std", target_os = "vxworks"))]
+ use std::os::vxworks::ext::ffi::{OsStrExt, OsStringExt};
+ #[cfg(all(
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/path/dec_int.rs b/src/path/dec_int.rs
+--- a/src/path/dec_int.rs	2026-10-25 02:03:03
++++ b/src/path/dec_int.rs	2026-10-25 02:03:03
+@@ -14,6 +14,8 @@
+ use core::num::{NonZeroU8, NonZeroUsize};
+ #[cfg(all(feature = "std", unix))]
+ use std::os::unix::ffi::OsStrExt;
++#[cfg(all(feature = "std", target_os = "aros", not(unix)))]
++use std::os::unix::ffi::OsStrExt;
+ #[cfg(all(
+     feature = "std",
+     target_os = "wasi",
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/pid.rs b/src/pid.rs
+--- a/src/pid.rs	2026-10-25 02:03:03
++++ b/src/pid.rs	2026-10-25 02:03:03
+@@ -2,10 +2,18 @@
+ 
+ #![allow(unsafe_code)]
+ 
+-use core::{fmt, num::NonZeroI32};
++use core::fmt;
++#[cfg(not(target_os = "aros"))]
++use core::num::NonZeroI32;
++#[cfg(target_os = "aros")]
++use core::num::NonZeroIsize as NonZeroI32;
+ 
+ /// A process identifier as a raw integer.
++#[cfg(not(target_os = "aros"))]
+ pub type RawPid = i32;
++/// Native AROS process identifiers preserve the pointer-sized `pid_t`.
++#[cfg(target_os = "aros")]
++pub type RawPid = isize;
+ 
+ /// `pid_t`—A non-zero Unix process ID.
+ ///
+@@ -69,7 +77,7 @@
+         let id = child.id();
+         // SAFETY: We know the returned ID is valid because it came directly
+         // from an OS API.
+-        unsafe { Self::from_raw_unchecked(id as i32) }
++        unsafe { Self::from_raw_unchecked(id as RawPid) }
+     }
+ 
+     /// Converts a `Pid` into a `NonZeroI32`.
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/pipe.rs b/src/pipe.rs
+--- a/src/pipe.rs	2026-10-25 02:03:03
++++ b/src/pipe.rs	2026-10-25 02:03:03
+@@ -42,7 +42,7 @@
+     target_os = "vita",
+     target_os = "wasi",
+ )))]
+-pub const PIPE_BUF: usize = c::PIPE_BUF;
++pub const PIPE_BUF: usize = c::PIPE_BUF as usize;
+ 
+ /// `pipe()`—Creates a pipe.
+ ///
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/process/ioctl.rs b/src/process/ioctl.rs
+--- a/src/process/ioctl.rs	2026-10-25 02:03:03
++++ b/src/process/ioctl.rs	2026-10-25 02:03:03
+@@ -24,6 +24,7 @@
+ /// [OpenBSD]: https://man.openbsd.org/tty.4
+ #[cfg(not(any(
+     windows,
++    target_os = "aros",
+     target_os = "aix",
+     target_os = "horizon",
+     target_os = "redox",
+@@ -37,6 +38,7 @@
+ 
+ #[cfg(not(any(
+     windows,
++    target_os = "aros",
+     target_os = "aix",
+     target_os = "horizon",
+     target_os = "redox",
+@@ -46,6 +48,7 @@
+ 
+ #[cfg(not(any(
+     windows,
++    target_os = "aros",
+     target_os = "aix",
+     target_os = "horizon",
+     target_os = "redox",
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/process/wait.rs b/src/process/wait.rs
+--- a/src/process/wait.rs	2026-10-25 02:03:03
++++ b/src/process/wait.rs	2026-10-25 02:03:03
+@@ -34,6 +34,7 @@
+         ///
+         /// [`Signal::Cont`]: crate::process::Signal::Cont
+         #[cfg(not(target_os = "horizon"))]
++        #[cfg(not(target_os = "aros"))]
+         const CONTINUED = bitcast!(backend::process::wait::WCONTINUED);
+ 
+         /// <https://docs.rs/bitflags/*/bitflags/#externally-defined-flags>
+@@ -58,15 +59,19 @@
+         /// [`Signal::Cont`].
+         ///
+         /// [`Signal::Cont`]: crate::process::Signal::Cont
++        #[cfg(not(target_os = "aros"))]
+         const CONTINUED = bitcast!(backend::process::wait::WCONTINUED);
+         /// Wait for processed that have exited.
+         #[cfg(not(target_os = "cygwin"))]
++        #[cfg(not(target_os = "aros"))]
+         const EXITED = bitcast!(backend::process::wait::WEXITED);
+         /// Keep processed in a waitable state.
+         #[cfg(not(target_os = "cygwin"))]
++        #[cfg(not(target_os = "aros"))]
+         const NOWAIT = bitcast!(backend::process::wait::WNOWAIT);
+         /// Wait for processes that have been stopped.
+         #[cfg(not(target_os = "cygwin"))]
++        #[cfg(not(target_os = "aros"))]
+         const STOPPED = bitcast!(backend::process::wait::WSTOPPED);
+ 
+         /// <https://docs.rs/bitflags/*/bitflags/#externally-defined-flags>
+@@ -337,6 +342,9 @@
+         // `waitid` call always has a valid `si_status` value.
+         //
+         // [specifies]: https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/signal.h.html
++        #[cfg(target_os = "aros")]
++        { self.0.si_status }
++        #[cfg(not(target_os = "aros"))]
+         unsafe { self.0.si_status() }
+     }
+ }
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/signal.rs b/src/signal.rs
+--- a/src/signal.rs	2026-10-25 02:03:03
++++ b/src/signal.rs	2026-10-25 02:03:03
+@@ -108,6 +108,7 @@
+             ),
+         ),
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const STKFLT: Self = Self(unsafe { NonZeroI32::new_unchecked(c::SIGSTKFLT) });
+     /// `SIGCHLD`
+     #[cfg(not(target_os = "vita"))]
+@@ -146,10 +147,12 @@
+     pub const PROF: Self = Self(unsafe { NonZeroI32::new_unchecked(c::SIGPROF) });
+     /// `SIGWINCH`
+     #[cfg(not(target_os = "vita"))]
++    #[cfg(not(target_os = "aros"))]
+     pub const WINCH: Self = Self(unsafe { NonZeroI32::new_unchecked(c::SIGWINCH) });
+     /// `SIGIO`, aka `SIGPOLL`
+     #[doc(alias = "POLL")]
+     #[cfg(not(any(target_os = "haiku", target_os = "vita")))]
++    #[cfg(not(target_os = "aros"))]
+     pub const IO: Self = Self(unsafe { NonZeroI32::new_unchecked(c::SIGIO) });
+     /// `SIGPWR`
+     #[cfg(not(any(
+@@ -160,6 +163,7 @@
+         target_os = "vita"
+     )))]
+     #[doc(alias = "PWR")]
++    #[cfg(not(target_os = "aros"))]
+     pub const POWER: Self = Self(unsafe { NonZeroI32::new_unchecked(c::SIGPWR) });
+     /// `SIGSYS`, aka `SIGUNUSED`
+     #[doc(alias = "UNUSED")]
+@@ -329,6 +333,7 @@
+                     ),
+                 )
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             c::SIGSTKFLT => Some(Self::STKFLT),
+             #[cfg(not(target_os = "vita"))]
+             c::SIGCHLD => Some(Self::CHILD),
+@@ -353,8 +358,10 @@
+             #[cfg(not(target_os = "vita"))]
+             c::SIGPROF => Some(Self::PROF),
+             #[cfg(not(target_os = "vita"))]
++            #[cfg(not(target_os = "aros"))]
+             c::SIGWINCH => Some(Self::WINCH),
+             #[cfg(not(any(target_os = "haiku", target_os = "vita")))]
++            #[cfg(not(target_os = "aros"))]
+             c::SIGIO => Some(Self::IO),
+             #[cfg(not(any(
+                 bsd,
+@@ -363,6 +370,7 @@
+                 target_os = "hurd",
+                 target_os = "vita"
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             c::SIGPWR => Some(Self::POWER),
+             c::SIGSYS => Some(Self::SYS),
+             #[cfg(any(
+@@ -437,6 +445,7 @@
+                     ),
+                 ),
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             Self::STKFLT => "Signal::STKFLT".fmt(f),
+             #[cfg(not(target_os = "vita"))]
+             Self::CHILD => "Signal::CHILD".fmt(f),
+@@ -461,8 +470,10 @@
+             #[cfg(not(target_os = "vita"))]
+             Self::PROF => "Signal::PROF".fmt(f),
+             #[cfg(not(target_os = "vita"))]
++            #[cfg(not(target_os = "aros"))]
+             Self::WINCH => "Signal::WINCH".fmt(f),
+             #[cfg(not(any(target_os = "haiku", target_os = "vita")))]
++            #[cfg(not(target_os = "aros"))]
+             Self::IO => "Signal::IO".fmt(f),
+             #[cfg(not(any(
+                 bsd,
+@@ -471,6 +482,7 @@
+                 target_os = "hurd",
+                 target_os = "vita"
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             Self::POWER => "Signal::POWER".fmt(f),
+             Self::SYS => "Signal::SYS".fmt(f),
+             #[cfg(any(
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/time/clock.rs b/src/time/clock.rs
+--- a/src/time/clock.rs	2026-10-25 02:03:03
++++ b/src/time/clock.rs	2026-10-25 02:03:03
+@@ -27,6 +27,7 @@
+ #[cfg(not(any(target_os = "redox", target_os = "wasi")))]
+ #[inline]
+ #[must_use]
++#[cfg(not(target_os = "aros"))]
+ pub fn clock_getres(id: ClockId) -> Timespec {
+     backend::time::syscalls::clock_getres(id)
+ }

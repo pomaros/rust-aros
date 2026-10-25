@@ -1,0 +1,112 @@
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/core/de/impls.rs b/src/core/de/impls.rs
+--- a/src/core/de/impls.rs	2026-10-25 02:03:03
++++ b/src/core/de/impls.rs	2026-10-25 02:03:03
+@@ -1887,17 +1887,17 @@
+ //
+ //    #[derive(Deserialize)]
+ //    #[serde(variant_identifier)]
+-#[cfg(all(feature = "std", any(unix, windows)))]
++#[cfg(all(feature = "std", any(unix, windows, target_os = "aros")))]
+ variant_identifier! {
+     OsStringKind (Unix; b"Unix"; 0, Windows; b"Windows"; 1)
+     "`Unix` or `Windows`",
+     OSSTR_VARIANTS
+ }
+ 
+-#[cfg(all(feature = "std", any(unix, windows)))]
++#[cfg(all(feature = "std", any(unix, windows, target_os = "aros")))]
+ struct OsStringVisitor;
+ 
+-#[cfg(all(feature = "std", any(unix, windows)))]
++#[cfg(all(feature = "std", any(unix, windows, target_os = "aros")))]
+ impl<'de> Visitor<'de> for OsStringVisitor {
+     type Value = OsString;
+ 
+@@ -1920,6 +1920,22 @@
+         }
+     }
+ 
++    // AROS OS strings are byte-based like Unix; accept the "Unix" variant.
++    #[cfg(all(target_os = "aros", not(unix)))]
++    fn visit_enum<A>(self, data: A) -> Result<Self::Value, A::Error>
++    where
++        A: EnumAccess<'de>,
++    {
++        use std::os::unix::ffi::OsStringExt;
++
++        match tri!(data.variant()) {
++            (OsStringKind::Unix, v) => v.newtype_variant().map(OsString::from_vec),
++            (OsStringKind::Windows, _) => Err(Error::custom(
++                "cannot deserialize Windows OS string on AROS",
++            )),
++        }
++    }
++
+     #[cfg(windows)]
+     fn visit_enum<A>(self, data: A) -> Result<Self::Value, A::Error>
+     where
+@@ -1938,8 +1954,8 @@
+     }
+ }
+ 
+-#[cfg(all(feature = "std", any(unix, windows)))]
+-#[cfg_attr(docsrs, doc(cfg(all(feature = "std", any(unix, windows)))))]
++#[cfg(all(feature = "std", any(unix, windows, target_os = "aros")))]
++#[cfg_attr(docsrs, doc(cfg(all(feature = "std", any(unix, windows, target_os = "aros")))))]
+ impl<'de> Deserialize<'de> for OsString {
+     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+     where
+@@ -1970,8 +1986,8 @@
+ }
+ 
+ forwarded_impl! {
+-    #[cfg(all(feature = "std", any(unix, windows)))]
+-    #[cfg_attr(docsrs, doc(cfg(all(feature = "std", any(unix, windows)))))]
++    #[cfg(all(feature = "std", any(unix, windows, target_os = "aros")))]
++    #[cfg_attr(docsrs, doc(cfg(all(feature = "std", any(unix, windows, target_os = "aros")))))]
+     (), Box<OsStr>, OsString::into_boxed_os_str
+ }
+ 
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/core/ser/impls.rs b/src/core/ser/impls.rs
+--- a/src/core/ser/impls.rs	2026-10-25 02:03:03
++++ b/src/core/ser/impls.rs	2026-10-25 02:03:03
+@@ -928,8 +928,8 @@
+     }
+ }
+ 
+-#[cfg(all(feature = "std", any(unix, windows)))]
+-#[cfg_attr(docsrs, doc(cfg(all(feature = "std", any(unix, windows)))))]
++#[cfg(all(feature = "std", any(unix, windows, target_os = "aros")))]
++#[cfg_attr(docsrs, doc(cfg(all(feature = "std", any(unix, windows, target_os = "aros")))))]
+ impl Serialize for OsStr {
+     #[cfg(unix)]
+     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+@@ -940,6 +940,17 @@
+         serializer.serialize_newtype_variant("OsString", 0, "Unix", self.as_bytes())
+     }
+ 
++    // AROS OS strings are byte-based like Unix; use the same "Unix" variant so
++    // they round-trip identically.
++    #[cfg(all(target_os = "aros", not(unix)))]
++    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
++    where
++        S: Serializer,
++    {
++        use std::os::unix::ffi::OsStrExt;
++        serializer.serialize_newtype_variant("OsString", 0, "Unix", self.as_bytes())
++    }
++
+     #[cfg(windows)]
+     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+     where
+@@ -951,8 +962,8 @@
+     }
+ }
+ 
+-#[cfg(all(feature = "std", any(unix, windows)))]
+-#[cfg_attr(docsrs, doc(cfg(all(feature = "std", any(unix, windows)))))]
++#[cfg(all(feature = "std", any(unix, windows, target_os = "aros")))]
++#[cfg_attr(docsrs, doc(cfg(all(feature = "std", any(unix, windows, target_os = "aros")))))]
+ impl Serialize for OsString {
+     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+     where

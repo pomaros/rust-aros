@@ -1,0 +1,776 @@
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/Cargo.toml b/Cargo.toml
+--- a/Cargo.toml	2026-10-25 02:03:03
++++ b/Cargo.toml	2026-10-25 02:03:03
+@@ -149,5 +149,6 @@
+ priority = 0
+ check-cfg = [
+     "cfg(mio_unsupported_force_poll_poll)",
++    "cfg(mio_unsupported_force_aros_poll)",
+     "cfg(mio_unsupported_force_waker_pipe)",
+ ]
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/io_source.rs b/src/io_source.rs
+--- a/src/io_source.rs	2026-10-25 02:03:03
++++ b/src/io_source.rs	2026-10-25 02:03:03
+@@ -1,5 +1,5 @@
+ use std::ops::{Deref, DerefMut};
+-#[cfg(any(unix, target_os = "wasi"))]
++#[cfg(any(unix, target_os = "wasi", target_os = "aros"))]
+ use std::os::fd::AsRawFd;
+ // TODO: once <https://github.com/rust-lang/rust/issues/126198> is fixed this
+ // can use `std::os::fd` and be merged with the above.
+@@ -107,6 +107,7 @@
+ #[cfg(any(
+     unix,
+     target_os = "hermit",
++    target_os = "aros",
+     all(target_os = "wasi", not(target_env = "p1"))
+ ))]
+ impl<T> event::Source for IoSource<T>
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/lib.rs b/src/lib.rs
+--- a/src/lib.rs	2026-10-25 02:03:03
++++ b/src/lib.rs	2026-10-25 02:03:03
+@@ -5,6 +5,7 @@
+     unused_imports,
+     dead_code
+ )]
++#![cfg_attr(target_os = "aros", allow(dead_code, unused_imports, unused_variables, unused_macros))]
+ #![cfg_attr(docsrs, feature(doc_cfg))]
+ // Disallow warnings when running tests.
+ #![cfg_attr(test, deny(warnings))]
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/net/tcp/listener.rs b/src/net/tcp/listener.rs
+--- a/src/net/tcp/listener.rs	2026-10-25 02:03:03
++++ b/src/net/tcp/listener.rs	2026-10-25 02:03:03
+@@ -1,5 +1,5 @@
+ use std::net::{self, SocketAddr};
+-#[cfg(any(unix, target_os = "wasi"))]
++#[cfg(any(unix, target_os = "wasi", target_os = "aros"))]
+ use std::os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, IntoRawFd, OwnedFd, RawFd};
+ // TODO: once <https://github.com/rust-lang/rust/issues/126198> is fixed this
+ // can use `std::os::fd` and be merged with the above.
+@@ -16,6 +16,7 @@
+ #[cfg(any(
+     unix,
+     target_os = "hermit",
++    target_os = "aros",
+     all(target_os = "wasi", not(target_env = "p1"))
+ ))]
+ use crate::sys::tcp::set_reuseaddr;
+@@ -66,7 +67,7 @@
+     #[cfg(not(all(target_os = "wasi", target_env = "p1")))]
+     pub fn bind(addr: SocketAddr) -> io::Result<TcpListener> {
+         let socket = new_for_addr(addr)?;
+-        #[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++        #[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+         let listener = unsafe { TcpListener::from_raw_fd(socket) };
+         #[cfg(windows)]
+         let listener = unsafe { TcpListener::from_raw_socket(socket as _) };
+@@ -183,21 +184,21 @@
+     }
+ }
+ 
+-#[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++#[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+ impl IntoRawFd for TcpListener {
+     fn into_raw_fd(self) -> RawFd {
+         self.inner.into_inner().into_raw_fd()
+     }
+ }
+ 
+-#[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++#[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+ impl AsRawFd for TcpListener {
+     fn as_raw_fd(&self) -> RawFd {
+         self.inner.as_raw_fd()
+     }
+ }
+ 
+-#[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++#[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+ impl FromRawFd for TcpListener {
+     /// Converts a `RawFd` to a `TcpListener`.
+     ///
+@@ -210,21 +211,21 @@
+     }
+ }
+ 
+-#[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++#[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+ impl From<TcpListener> for OwnedFd {
+     fn from(tcp_listener: TcpListener) -> Self {
+         tcp_listener.inner.into_inner().into()
+     }
+ }
+ 
+-#[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++#[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+ impl AsFd for TcpListener {
+     fn as_fd(&self) -> BorrowedFd<'_> {
+         self.inner.as_fd()
+     }
+ }
+ 
+-#[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++#[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+ impl From<OwnedFd> for TcpListener {
+     /// Converts a `RawFd` to a `TcpListener`.
+     ///
+@@ -297,7 +298,7 @@
+         // mio::net::TcpListener which ensures that we actually pass in a valid file
+         // descriptor/socket
+         unsafe {
+-            #[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++            #[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+             {
+                 net::TcpListener::from_raw_fd(listener.into_raw_fd())
+             }
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/net/tcp/stream.rs b/src/net/tcp/stream.rs
+--- a/src/net/tcp/stream.rs	2026-10-25 02:03:03
++++ b/src/net/tcp/stream.rs	2026-10-25 02:03:03
+@@ -1,7 +1,7 @@
+ use std::fmt;
+ use std::io::{self, IoSlice, IoSliceMut, Read, Write};
+ use std::net::{self, Shutdown, SocketAddr};
+-#[cfg(any(unix, target_os = "wasi"))]
++#[cfg(any(unix, target_os = "wasi", target_os = "aros"))]
+ use std::os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, IntoRawFd, OwnedFd, RawFd};
+ // TODO: once <https://github.com/rust-lang/rust/issues/126198> is fixed this
+ // can use `std::os::fd` and be merged with the above.
+@@ -90,7 +90,7 @@
+     #[cfg(not(all(target_os = "wasi", target_env = "p1")))]
+     pub fn connect(addr: SocketAddr) -> io::Result<TcpStream> {
+         let socket = new_for_addr(addr)?;
+-        #[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++        #[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+         let stream = unsafe { TcpStream::from_raw_fd(socket) };
+         #[cfg(windows)]
+         let stream = unsafe { TcpStream::from_raw_socket(socket as _) };
+@@ -236,7 +236,7 @@
+     /// #
+     /// # fn main() -> Result<(), Box<dyn Error>> {
+     /// use std::io;
+-    /// #[cfg(any(unix, target_os = "wasi"))]
++    /// #[cfg(any(unix, target_os = "wasi", target_os = "aros"))]
+     /// use std::os::fd::AsRawFd;
+     /// #[cfg(windows)]
+     /// use std::os::windows::io::AsRawSocket;
+@@ -354,21 +354,21 @@
+     }
+ }
+ 
+-#[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++#[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+ impl IntoRawFd for TcpStream {
+     fn into_raw_fd(self) -> RawFd {
+         self.inner.into_inner().into_raw_fd()
+     }
+ }
+ 
+-#[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++#[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+ impl AsRawFd for TcpStream {
+     fn as_raw_fd(&self) -> RawFd {
+         self.inner.as_raw_fd()
+     }
+ }
+ 
+-#[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++#[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+ impl FromRawFd for TcpStream {
+     /// Converts a `RawFd` to a `TcpStream`.
+     ///
+@@ -381,21 +381,21 @@
+     }
+ }
+ 
+-#[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++#[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+ impl From<TcpStream> for OwnedFd {
+     fn from(tcp_stream: TcpStream) -> Self {
+         tcp_stream.inner.into_inner().into()
+     }
+ }
+ 
+-#[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++#[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+ impl AsFd for TcpStream {
+     fn as_fd(&self) -> BorrowedFd<'_> {
+         self.inner.as_fd()
+     }
+ }
+ 
+-#[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++#[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+ impl From<OwnedFd> for TcpStream {
+     /// Converts a `RawFd` to a `TcpStream`.
+     ///
+@@ -468,7 +468,7 @@
+         // mio::net::TcpStream which ensures that we actually pass in a valid file
+         // descriptor/socket
+         unsafe {
+-            #[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++            #[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+             {
+                 net::TcpStream::from_raw_fd(stream.into_raw_fd())
+             }
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/net/udp.rs b/src/net/udp.rs
+--- a/src/net/udp.rs	2026-10-25 02:03:03
++++ b/src/net/udp.rs	2026-10-25 02:03:03
+@@ -8,7 +8,7 @@
+ //! [portability guidelines]: ../struct.Poll.html#portability
+ 
+ use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
+-#[cfg(any(unix, target_os = "wasi"))]
++#[cfg(any(unix, target_os = "wasi", target_os = "aros"))]
+ use std::os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, IntoRawFd, OwnedFd, RawFd};
+ // TODO: once <https://github.com/rust-lang/rust/issues/126198> is fixed this
+ // can use `std::os::fd` and be merged with the above.
+@@ -582,7 +582,7 @@
+     /// #
+     /// # fn main() -> Result<(), Box<dyn Error>> {
+     /// use std::io;
+-    /// #[cfg(any(unix, target_os = "wasi"))]
++    /// #[cfg(any(unix, target_os = "wasi", target_os = "aros"))]
+     /// use std::os::fd::AsRawFd;
+     /// #[cfg(windows)]
+     /// use std::os::windows::io::AsRawSocket;
+@@ -652,21 +652,21 @@
+     }
+ }
+ 
+-#[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++#[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+ impl IntoRawFd for UdpSocket {
+     fn into_raw_fd(self) -> RawFd {
+         self.inner.into_inner().into_raw_fd()
+     }
+ }
+ 
+-#[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++#[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+ impl AsRawFd for UdpSocket {
+     fn as_raw_fd(&self) -> RawFd {
+         self.inner.as_raw_fd()
+     }
+ }
+ 
+-#[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++#[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+ impl FromRawFd for UdpSocket {
+     /// Converts a `RawFd` to a `UdpSocket`.
+     ///
+@@ -679,21 +679,21 @@
+     }
+ }
+ 
+-#[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++#[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+ impl From<UdpSocket> for OwnedFd {
+     fn from(udp_socket: UdpSocket) -> Self {
+         udp_socket.inner.into_inner().into()
+     }
+ }
+ 
+-#[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++#[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+ impl AsFd for UdpSocket {
+     fn as_fd(&self) -> BorrowedFd<'_> {
+         self.inner.as_fd()
+     }
+ }
+ 
+-#[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++#[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+ impl From<OwnedFd> for UdpSocket {
+     /// Converts a `RawFd` to a `UdpSocket`.
+     ///
+@@ -766,7 +766,7 @@
+         // mio::net::UdpSocket which ensures that we actually pass in a valid file
+         // descriptor/socket
+         unsafe {
+-            #[cfg(any(unix, target_os = "hermit", target_os = "wasi"))]
++            #[cfg(any(unix, target_os = "hermit", target_os = "wasi", target_os = "aros"))]
+             {
+                 net::UdpSocket::from_raw_fd(socket.into_raw_fd())
+             }
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/poll.rs b/src/poll.rs
+--- a/src/poll.rs	2026-10-25 02:03:03
++++ b/src/poll.rs	2026-10-25 02:03:03
+@@ -1,7 +1,9 @@
+ #[cfg(all(
+     unix,
+     not(mio_unsupported_force_poll_poll),
++    not(mio_unsupported_force_aros_poll),
+     not(any(
++        target_os = "aros",
+         target_os = "aix",
+         target_os = "espidf",
+         target_os = "fuchsia",
+@@ -445,7 +447,9 @@
+ #[cfg(all(
+     unix,
+     not(mio_unsupported_force_poll_poll),
++    not(mio_unsupported_force_aros_poll),
+     not(any(
++        target_os = "aros",
+         target_os = "aix",
+         target_os = "espidf",
+         target_os = "fuchsia",
+@@ -749,7 +753,9 @@
+ #[cfg(all(
+     unix,
+     not(mio_unsupported_force_poll_poll),
++    not(mio_unsupported_force_aros_poll),
+     not(any(
++        target_os = "aros",
+         target_os = "aix",
+         target_os = "espidf",
+         target_os = "haiku",
+@@ -772,7 +778,9 @@
+ #[cfg(all(
+     unix,
+     not(mio_unsupported_force_poll_poll),
++    not(mio_unsupported_force_aros_poll),
+     not(any(
++        target_os = "aros",
+         target_os = "aix",
+         target_os = "espidf",
+         target_os = "haiku",
+@@ -796,6 +804,7 @@
+     #[cfg(all(
+         unix,
+         not(mio_unsupported_force_poll_poll),
++    not(mio_unsupported_force_aros_poll),
+         not(any(
+             target_os = "aix",
+             target_os = "espidf",
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/sys/mod.rs b/src/sys/mod.rs
+--- a/src/sys/mod.rs	2026-10-25 02:03:03
++++ b/src/sys/mod.rs	2026-10-25 02:03:03
+@@ -73,6 +73,13 @@
+     pub(crate) use self::wasip1::*;
+ }
+ 
++// A non-unix AROS target has only this explicitly unsupported shell fallback.
++// The native AROS SDK sets unix and selects the real socket poll backend above.
++#[cfg(all(feature = "os-poll", target_os = "aros", not(unix)))]
++mod shell;
++#[cfg(all(feature = "os-poll", target_os = "aros", not(unix)))]
++pub(crate) use self::shell::*;
++
+ cfg_not_os_poll! {
+     mod shell;
+     pub(crate) use self::shell::*;
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/sys/shell/mod.rs b/src/sys/shell/mod.rs
+--- a/src/sys/shell/mod.rs	2026-10-25 02:03:03
++++ b/src/sys/shell/mod.rs	2026-10-25 02:03:03
+@@ -21,7 +21,7 @@
+ 
+ cfg_io_source! {
+     use std::io;
+-    #[cfg(any(unix))]
++    #[cfg(any(unix, target_os = "aros"))]
+     use std::os::fd::RawFd;
+     // TODO: once <https://github.com/rust-lang/rust/issues/126198> is fixed this
+     // can use `std::os::fd` and be merged with the above.
+@@ -30,7 +30,7 @@
+     #[cfg(windows)]
+     use std::os::windows::io::RawSocket;
+ 
+-    #[cfg(any(windows, unix, target_os = "hermit"))]
++    #[cfg(any(windows, unix, target_os = "hermit", target_os = "aros"))]
+     use crate::{Registry, Token, Interest};
+ 
+     pub(crate) struct IoSourceState;
+@@ -50,7 +50,7 @@
+         }
+     }
+ 
+-    #[cfg(any(unix, target_os = "hermit"))]
++    #[cfg(any(unix, target_os = "hermit", target_os = "aros"))]
+     impl IoSourceState {
+         pub fn register(
+             &mut self,
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/sys/shell/selector.rs b/src/sys/shell/selector.rs
+--- a/src/sys/shell/selector.rs	2026-10-25 02:03:03
++++ b/src/sys/shell/selector.rs	2026-10-25 02:03:03
+@@ -1,5 +1,5 @@
+ use std::io;
+-#[cfg(unix)]
++#[cfg(any(unix, target_os = "aros"))]
+ use std::os::fd::{AsFd, AsRawFd, BorrowedFd, RawFd};
+ use std::time::Duration;
+ 
+@@ -11,6 +11,11 @@
+ pub struct Selector {}
+ 
+ impl Selector {
++    #[cfg(target_os = "aros")]
++    pub fn new() -> io::Result<Selector> {
++        os_required!();
++    }
++
+     pub fn try_clone(&self) -> io::Result<Selector> {
+         os_required!();
+     }
+@@ -20,7 +25,7 @@
+     }
+ }
+ 
+-#[cfg(unix)]
++#[cfg(any(unix, target_os = "aros"))]
+ cfg_os_ext! {
+     use crate::{Interest, Token};
+ 
+@@ -67,14 +72,14 @@
+     }
+ }
+ 
+-#[cfg(unix)]
++#[cfg(any(unix, target_os = "aros"))]
+ impl AsFd for Selector {
+     fn as_fd(&self) -> BorrowedFd<'_> {
+         os_required!()
+     }
+ }
+ 
+-#[cfg(unix)]
++#[cfg(any(unix, target_os = "aros"))]
+ impl AsRawFd for Selector {
+     fn as_raw_fd(&self) -> RawFd {
+         os_required!()
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/sys/shell/tcp.rs b/src/sys/shell/tcp.rs
+--- a/src/sys/shell/tcp.rs	2026-10-25 02:03:03
++++ b/src/sys/shell/tcp.rs	2026-10-25 02:03:03
+@@ -21,7 +21,7 @@
+     os_required!();
+ }
+ 
+-#[cfg(any(unix, target_os = "hermit"))]
++#[cfg(any(unix, target_os = "hermit", target_os = "aros"))]
+ pub(crate) fn set_reuseaddr(_: &net::TcpListener, _: bool) -> io::Result<()> {
+     os_required!();
+ }
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/sys/unix/mod.rs b/src/sys/unix/mod.rs
+--- a/src/sys/unix/mod.rs	2026-10-25 02:03:03
++++ b/src/sys/unix/mod.rs	2026-10-25 02:03:03
+@@ -17,6 +17,7 @@
+ cfg_os_poll! {
+     #[cfg_attr(all(
+         not(mio_unsupported_force_poll_poll),
++        not(mio_unsupported_force_aros_poll),
+         any(
+             target_os = "android",
+             target_os = "illumos",
+@@ -26,6 +27,7 @@
+     ), path = "selector/epoll.rs")]
+     #[cfg_attr(all(
+         not(mio_unsupported_force_poll_poll),
++        not(mio_unsupported_force_aros_poll),
+         any(
+             target_os = "dragonfly",
+             target_os = "freebsd",
+@@ -40,6 +42,8 @@
+     ), path = "selector/kqueue.rs")]
+     #[cfg_attr(any(
+         mio_unsupported_force_poll_poll,
++        mio_unsupported_force_aros_poll,
++        target_os = "aros",
+         target_os = "aix",
+         target_os = "espidf",
+         target_os = "fuchsia",
+@@ -58,6 +62,7 @@
+ 
+     #[cfg_attr(all(
+         not(mio_unsupported_force_waker_pipe),
++        not(mio_unsupported_force_aros_poll),
+         any(
+             target_os = "android",
+             target_os = "espidf",
+@@ -69,6 +74,7 @@
+     ), path = "waker/eventfd.rs")]
+     #[cfg_attr(all(
+         not(mio_unsupported_force_waker_pipe),
++        not(mio_unsupported_force_aros_poll),
+         not(mio_unsupported_force_poll_poll), // `kqueue(2)` based waker doesn't work with `poll(2)`.
+         any(
+             target_os = "freebsd",
+@@ -108,6 +114,7 @@
+         all(target_os = "wasi", target_env = "p1")
+     ), path = "waker/pipe.rs")]
+     #[cfg_attr(any(target_os = "horizon", all(target_os = "wasi", not(target_env = "p1"))), path = "waker/single_threaded.rs")]
++    #[cfg_attr(any(target_os = "aros", mio_unsupported_force_aros_poll), path = "waker/aros.rs")]
+     mod waker;
+     // NOTE: the `Waker` type is expected in the selector module as the
+     // `poll(2)` implementation needs to do some special stuff.
+@@ -145,6 +152,7 @@
+                 ),
+             ),
+             // NOTE: also add to the list for the `pipe` module below.
++            target_os = "aros",
+             target_os = "aix",
+             target_os = "dragonfly",
+             target_os = "haiku",
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/sys/unix/net.rs b/src/sys/unix/net.rs
+--- a/src/sys/unix/net.rs	2026-10-25 02:03:03
++++ b/src/sys/unix/net.rs	2026-10-25 02:03:03
+@@ -55,6 +55,19 @@
+         return Err(err);
+     }
+ 
++    // AROS applies nonblocking/close-on-exec through its native fd provider.
++    #[cfg(target_os = "aros")]
++    {
++        if unsafe { libc::aros_socket_nonblocking(socket, 1) } < 0 {
++            let error = io::Error::last_os_error();
++            let _ = syscall!(close(socket));
++            return Err(error);
++        }
++        if let Err(error) = syscall!(fcntl(socket, libc::F_SETFD, libc::FD_CLOEXEC)) {
++            let _ = syscall!(close(socket));
++            return Err(error);
++        }
++    }
+     // Darwin (and others) doesn't have SOCK_NONBLOCK or SOCK_CLOEXEC.
+     #[cfg(any(
+         target_os = "aix",
+@@ -137,6 +150,8 @@
+                     target_os = "nto",
+                 ))]
+                 sin_len: 0,
++                #[cfg(target_os = "aros")]
++                sin_len: size_of::<libc::sockaddr_in>() as u8,
+                 #[cfg(target_os = "vita")]
+                 sin_vport: addr.port().to_be(),
+             };
+@@ -173,6 +188,8 @@
+                     target_os = "hermit",
+                 ))]
+                 sin6_len: 0,
++                #[cfg(target_os = "aros")]
++                sin6_len: size_of::<libc::sockaddr_in6>() as u8,
+                 #[cfg(target_os = "vita")]
+                 sin6_vport: addr.port().to_be(),
+                 #[cfg(any(target_os = "illumos", target_os = "solaris"))]
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/sys/unix/pipe.rs b/src/sys/unix/pipe.rs
+--- a/src/sys/unix/pipe.rs	2026-10-25 02:03:03
++++ b/src/sys/unix/pipe.rs	2026-10-25 02:03:03
+@@ -30,6 +30,7 @@
+     }
+ 
+     #[cfg(any(
++        target_os = "aros",
+         target_os = "aix",
+         target_os = "haiku",
+         target_os = "ios",
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/sys/unix/selector/poll.rs b/src/sys/unix/selector/poll.rs
+--- a/src/sys/unix/selector/poll.rs	2026-10-25 02:03:03
++++ b/src/sys/unix/selector/poll.rs	2026-10-25 02:03:03
+@@ -192,6 +192,8 @@
+ 
+     pub fn select(&self, events: &mut Events, mut timeout: Option<Duration>) -> io::Result<()> {
+         events.clear();
++        #[cfg(any(target_os = "aros", mio_unsupported_force_aros_poll))]
++        let deadline = timeout.and_then(|timeout| std::time::Instant::now().checked_add(timeout));
+ 
+         let mut fds = self.fds.lock().unwrap();
+ 
+@@ -211,17 +213,40 @@
+                 fds = self.operations_complete.wait(fds).unwrap();
+             }
+ 
++            #[cfg(not(any(target_os = "aros", mio_unsupported_force_aros_poll)))]
+             if self.notify_waker.woken() {
+                 timeout = Some(Duration::from_secs(0))
+             }
+ 
+             // Perform the poll.
+             trace!("Polling on {:?}", &fds);
++            #[cfg(not(any(target_os = "aros", mio_unsupported_force_aros_poll)))]
+             let num_events = poll(&mut fds.poll_fds, timeout)?;
++            #[cfg(any(target_os = "aros", mio_unsupported_force_aros_poll))]
++            let num_events = {
++                let mut chunk = deadline.map(|end| end.saturating_duration_since(std::time::Instant::now()))
++                    .unwrap_or(Duration::from_millis(50)).min(Duration::from_millis(50));
++                if self.notify_waker.woken() || self.pending_wake_token.lock().unwrap().is_some() {
++                    chunk = Duration::ZERO;
++                }
++                if fds.poll_fds.is_empty() {
++                    self.notify_waker.wait_for(chunk);
++                    0
++                } else {
++                    poll(&mut fds.poll_fds, Some(chunk))?
++                }
++            };
+             trace!("Poll finished: {:?}", &fds);
+ 
+-            if num_events == 0 {
+-                return Ok(());
++            #[cfg(not(any(target_os = "aros", mio_unsupported_force_aros_poll)))]
++            if num_events == 0 { return Ok(()); }
++            #[cfg(any(target_os = "aros", mio_unsupported_force_aros_poll))]
++            if num_events == 0 && !self.notify_waker.woken()
++                && self.pending_wake_token.lock().unwrap().is_none() {
++                if deadline.is_some_and(|end| std::time::Instant::now() >= end) {
++                    return Ok(());
++                }
++                continue;
+             }
+ 
+             let waker_events;
+@@ -232,19 +257,38 @@
+                 notified = waker_events != 0;
+                 num_fd_events = if notified { num_events - 1 } else { num_events }
+             } else {
+-                waker_events = 0;
+-                notified = self.notify_waker.woken();
++                #[cfg(not(any(target_os = "aros", mio_unsupported_force_aros_poll)))]
++                { notified = self.notify_waker.woken(); waker_events = 0; }
++                #[cfg(any(target_os = "aros", mio_unsupported_force_aros_poll))]
++                {
++                    notified = self.notify_waker.woken() || self.pending_wake_token.lock().unwrap().is_some();
++                    waker_events = if notified { libc::POLLIN } else { 0 };
++                }
+                 num_fd_events = num_events;
+             };
+ 
++            // Reset before taking the token: a concurrent wake after reset
++            // either joins this event or leaves a pending token for next wait.
++            #[cfg(any(target_os = "aros", mio_unsupported_force_aros_poll))]
++            if notified { self.notify_waker.ack_and_reset(); }
+             let pending_wake_token = self.pending_wake_token.lock().unwrap().take();
+ 
++            #[cfg(not(any(target_os = "aros", mio_unsupported_force_aros_poll)))]
+             if notified {
+                 self.notify_waker.ack_and_reset();
+                 if pending_wake_token.is_some() {
+                     num_fd_events += 1;
+                 }
+             }
++            // A user wake can arrive after `notified` was sampled but before
++            // taking its token. Every consumed token must still be readable.
++            #[cfg(any(target_os = "aros", mio_unsupported_force_aros_poll))]
++            let waker_events = if pending_wake_token.is_some() {
++                num_fd_events += 1;
++                libc::POLLIN
++            } else {
++                waker_events
++            };
+ 
+             // We now check whether this poll was performed with descriptors which were pending
+             // for removal and filter out any matching.
+@@ -506,14 +550,14 @@
+ #[cfg(target_os = "wasi")]
+ const POLLPRI: PollFlagInt = 0;
+ 
+-#[cfg(not(target_os = "wasi"))]
++#[cfg(not(any(target_os = "aros", target_os = "wasi")))]
+ const POLLRDBAND: PollFlagInt = libc::POLLRDBAND;
+-#[cfg(target_os = "wasi")]
++#[cfg(any(target_os = "aros", target_os = "wasi"))]
+ const POLLRDBAND: PollFlagInt = 0;
+ 
+-#[cfg(not(target_os = "wasi"))]
++#[cfg(not(any(target_os = "aros", target_os = "wasi")))]
+ const POLLWRBAND: PollFlagInt = libc::POLLWRBAND;
+-#[cfg(target_os = "wasi")]
++#[cfg(any(target_os = "aros", target_os = "wasi"))]
+ const POLLWRBAND: PollFlagInt = 0;
+ 
+ const READ_EVENTS: PollFlagInt = libc::POLLIN | POLLRDHUP;
+@@ -659,8 +703,10 @@
+             libc::POLLIN,
+             super::POLLPRI,
+             libc::POLLOUT,
++            #[cfg(not(target_os = "aros"))]
+             libc::POLLRDNORM,
+             super::POLLRDBAND,
++            #[cfg(not(target_os = "aros"))]
+             libc::POLLWRNORM,
+             super::POLLWRBAND,
+             libc::POLLERR,
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/sys/unix/tcp.rs b/src/sys/unix/tcp.rs
+--- a/src/sys/unix/tcp.rs	2026-10-25 02:03:03
++++ b/src/sys/unix/tcp.rs	2026-10-25 02:03:03
+@@ -89,6 +89,7 @@
+     // OSs inherit the non-blocking flag from the listener, so we just have to
+     // set `CLOEXEC`.
+     #[cfg(any(
++        target_os = "aros",
+         target_os = "aix",
+         target_os = "haiku",
+         target_os = "ios",
+@@ -119,7 +120,8 @@
+             // See https://github.com/tokio-rs/mio/issues/1450
+             #[cfg(any(
+                 all(target_arch = "x86", target_os = "android"),
+-                target_os = "aix",
++                target_os = "aros",
++        target_os = "aix",
+                 target_os = "espidf",
+                 target_os = "vita",
+                 target_os = "hermit",
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/sys/unix/uds/listener.rs b/src/sys/unix/uds/listener.rs
+--- a/src/sys/unix/uds/listener.rs	2026-10-25 02:03:03
++++ b/src/sys/unix/uds/listener.rs	2026-10-25 02:03:03
+@@ -63,6 +63,7 @@
+     let mut socklen = mem::size_of_val(&sockaddr) as libc::socklen_t;
+ 
+     #[cfg(not(any(
++        target_os = "aros",
+         target_os = "aix",
+         target_os = "haiku",
+         target_os = "ios",
+@@ -92,6 +93,7 @@
+     };
+ 
+     #[cfg(any(
++        target_os = "aros",
+         target_os = "aix",
+         target_os = "haiku",
+         target_os = "ios",
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/sys/unix/uds/mod.rs b/src/sys/unix/uds/mod.rs
+--- a/src/sys/unix/uds/mod.rs	2026-10-25 02:03:03
++++ b/src/sys/unix/uds/mod.rs	2026-10-25 02:03:03
+@@ -86,6 +86,7 @@
+     T: FromRawFd,
+ {
+     #[cfg(not(any(
++        target_os = "aros",
+         target_os = "aix",
+         target_os = "haiku",
+         target_os = "ios",
+@@ -111,6 +112,7 @@
+     // the file descriptors will leak. Creating `pair` above ensures that if
+     // there is an error, the file descriptors are closed.
+     #[cfg(any(
++        target_os = "aros",
+         target_os = "aix",
+         target_os = "haiku",
+         target_os = "ios",
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/sys/unix/waker/aros.rs b/src/sys/unix/waker/aros.rs
+--- a/src/sys/unix/waker/aros.rs	1970-01-01 01:00:00
++++ b/src/sys/unix/waker/aros.rs	2026-10-25 02:03:03
+@@ -0,0 +1,23 @@
++// SPDX-License-Identifier: MIT
++// Copyright (c) 2026 John Knipper
++//! Cross-thread wakeup using native Rust synchronization, without a pipe fd.
++use std::{io, os::fd::RawFd, sync::{Condvar, Mutex}, time::Duration};
++#[derive(Debug)]
++pub(crate) struct Waker { pending: Mutex<bool>, signal: Condvar }
++impl Waker {
++    pub(crate) fn new_unregistered() -> io::Result<Self> {
++        Ok(Self { pending: Mutex::new(false), signal: Condvar::new() })
++    }
++    pub(crate) fn wake(&self) -> io::Result<()> {
++        *self.pending.lock().unwrap() = true;
++        self.signal.notify_all();
++        Ok(())
++    }
++    pub(crate) fn fd(&self) -> Option<RawFd> { None }
++    pub(crate) fn woken(&self) -> bool { *self.pending.lock().unwrap() }
++    pub(crate) fn ack_and_reset(&self) { *self.pending.lock().unwrap() = false; }
++    pub(crate) fn wait_for(&self, timeout: Duration) {
++        let pending = self.pending.lock().unwrap();
++        if !*pending { drop(self.signal.wait_timeout(pending, timeout).unwrap()); }
++    }
++}

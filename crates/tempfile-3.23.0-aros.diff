@@ -1,0 +1,103 @@
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/file/imp/unix.rs b/src/file/imp/unix.rs
+--- a/src/file/imp/unix.rs	2026-10-25 02:03:03
++++ b/src/file/imp/unix.rs	2026-10-25 02:03:03
+@@ -66,7 +66,20 @@
+ 
+ #[cfg(not(target_os = "linux"))]
+ pub fn create(dir: &Path) -> io::Result<File> {
+-    create_unix(dir)
++    #[cfg(target_os = "aros")]
++    {
++        let _ = dir;
++        // Native DOS has no qualified anonymous/delete-on-last-close contract.
++        // Do not create a named file and silently ignore its failed unlink.
++        Err(io::Error::new(
++            io::ErrorKind::Unsupported,
++            "anonymous temporary files require native delete-on-close support",
++        ))
++    }
++    #[cfg(not(target_os = "aros"))]
++    {
++        create_unix(dir)
++    }
+ }
+ 
+ fn create_unix(dir: &Path) -> io::Result<File> {
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/file/mod.rs b/src/file/mod.rs
+--- a/src/file/mod.rs	2026-10-25 02:03:03
++++ b/src/file/mod.rs	2026-10-25 02:03:03
+@@ -35,6 +35,8 @@
+ /// # Errors
+ ///
+ /// If the file can not be created, `Err` is returned.
++/// On AROS, anonymous temporary files return `ErrorKind::Unsupported` before
++/// creating a file because native delete-on-last-close is not available.
+ ///
+ /// # Examples
+ ///
+@@ -67,6 +69,8 @@
+ /// # Errors
+ ///
+ /// If the file can not be created, `Err` is returned.
++/// On AROS, anonymous temporary files return `ErrorKind::Unsupported` before
++/// creating a file because native delete-on-last-close is not available.
+ ///
+ /// # Examples
+ ///
+@@ -447,8 +451,14 @@
+ /// [`NamedTempFile::new_in()`]: #method.new_in
+ /// [`std::process::exit()`]: http://doc.rust-lang.org/std/process/fn.exit.html
+ /// [`lazy_static`]: https://github.com/rust-lang-nursery/lazy-static.rs/issues/62
++#[cfg_attr(target_os = "aros", doc = "On AROS, `into_file` is unavailable: DOS handlers cannot reliably unlink a live file. Close all file handles before `TempPath` cleanup; normal named-file drop closes its owned handle first.")]
+ pub struct NamedTempFile<F = File> {
++    // DOS handlers may refuse deletion while this handle is open. On AROS,
++    // close it before TempPath's best-effort cleanup runs during normal drop.
++    #[cfg(target_os = "aros")]
++    file: F,
+     path: TempPath,
++    #[cfg(not(target_os = "aros"))]
+     file: F,
+ }
+ 
+@@ -678,8 +688,20 @@
+     /// # Ok::<(), std::io::Error>(())
+     /// ```
+     pub fn close(self) -> io::Result<()> {
+-        let NamedTempFile { path, .. } = self;
+-        path.close()
++        #[cfg(target_os = "aros")]
++        {
++            // Unlike Unix unlink, native DOS deletion may require this handle
++            // to be closed first. Preserve any real deletion error, including
++            // refusal while another independently owned handle remains open.
++            let NamedTempFile { path, file } = self;
++            drop(file);
++            path.close()
++        }
++        #[cfg(not(target_os = "aros"))]
++        {
++            let NamedTempFile { path, .. } = self;
++            path.close()
++        }
+     }
+ 
+     /// Persist the temporary file at the target path.
+@@ -844,6 +866,7 @@
+     ///
+     /// The underlying file will be removed from the filesystem but the returned [`File`]
+     /// can still be read/written.
++    #[cfg(not(target_os = "aros"))]
+     pub fn into_file(self) -> F {
+         self.file
+     }
+@@ -858,8 +881,8 @@
+ 
+     /// Converts the named temporary file into its constituent parts.
+     ///
+-    /// Note: When the path is dropped, the underlying file will be removed from the filesystem but
+-    /// the returned [`File`] can still be read/written.
++    #[cfg_attr(not(target_os = "aros"), doc = "Note: When the path is dropped, the underlying file will be removed from the filesystem but the returned [`File`] can still be read/written.")]
++    #[cfg_attr(target_os = "aros", doc = "On AROS, this transfers both owners to the caller. Close the returned file and all cloned/reopened handles before closing or dropping `TempPath`; live-file unlink is unsupported and cleanup is best-effort. This does not create an anonymous temporary file.")]
+     pub fn into_parts(self) -> (F, TempPath) {
+         (self.file, self.path)
+     }

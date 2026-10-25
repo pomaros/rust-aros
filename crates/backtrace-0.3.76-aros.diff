@@ -1,0 +1,22 @@
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backtrace/mod.rs b/src/backtrace/mod.rs
+--- a/src/backtrace/mod.rs	2026-10-25 02:03:01
++++ b/src/backtrace/mod.rs	2026-10-25 02:03:01
+@@ -175,6 +175,7 @@
+             all(
+                 unix,
+                 not(target_os = "emscripten"),
++                not(target_os = "aros"),
+                 not(all(target_os = "ios", target_arch = "arm")),
+             ),
+             all(
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/symbolize/mod.rs b/src/symbolize/mod.rs
+--- a/src/symbolize/mod.rs	2026-10-25 02:03:01
++++ b/src/symbolize/mod.rs	2026-10-25 02:03:01
+@@ -441,6 +441,7 @@
+         any(unix, all(windows, target_env = "gnu")),
+         not(target_vendor = "uwp"),
+         not(target_os = "emscripten"),
++        not(target_os = "aros"),
+         any(not(backtrace_in_libstd), feature = "backtrace"),
+     ))] {
+         mod gimli;

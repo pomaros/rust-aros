@@ -1,0 +1,35 @@
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/Cargo.toml b/Cargo.toml
+--- a/Cargo.toml	2026-10-25 02:03:01
++++ b/Cargo.toml	2026-10-25 02:03:01
+@@ -104,7 +104,7 @@
+ version = "0.2.154"
+ default-features = false
+ 
+-[target.'cfg(any(target_os = "macos", target_os = "openbsd", target_os = "vita", target_os = "emscripten"))'.dependencies.libc]
++[target.'cfg(any(target_os = "macos", target_os = "aros", target_os = "openbsd", target_os = "vita", target_os = "emscripten"))'.dependencies.libc]
+ version = "0.2.154"
+ default-features = false
+ 
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backends.rs b/src/backends.rs
+--- a/src/backends.rs	2026-10-25 02:03:01
++++ b/src/backends.rs	2026-10-25 02:03:01
+@@ -64,6 +64,7 @@
+         pub use use_file::*;
+     } else if #[cfg(any(
+         target_os = "macos",
++        target_os = "aros",
+         target_os = "openbsd",
+         target_os = "vita",
+         target_os = "emscripten",
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/util_libc.rs b/src/util_libc.rs
+--- a/src/util_libc.rs	2026-10-25 02:03:01
++++ b/src/util_libc.rs	2026-10-25 02:03:01
+@@ -22,6 +22,8 @@
+         use __errno as errno_location;
+     } else if #[cfg(target_os = "aix")] {
+         use libc::_Errno as errno_location;
++    } else if #[cfg(target_os = "aros")] {
++        use libc::__stdc_geterrnoptr as errno_location;
+     }
+ }
+ 

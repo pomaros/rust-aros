@@ -1,0 +1,55 @@
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/aros.rs b/src/aros.rs
+--- a/src/aros.rs	1970-01-01 01:00:00
++++ b/src/aros.rs	2026-10-25 02:03:01
+@@ -0,0 +1,38 @@
++//! AROS errno accessor. Self-contained: the `libc` crate has no AROS target,
++//! so this declares the two posixc symbols it needs directly (the same pattern
++//! the AROS Rust `std` pal uses). errno lives at `*__stdc_geterrnoptr()`;
++//! messages come from posixc `strerror_r`.
++
++use crate::Errno;
++use core::ffi::{c_char, c_int};
++use core::str;
++
++extern "C" {
++    fn __stdc_geterrnoptr() -> *mut c_int;
++    fn strerror_r(errnum: c_int, buf: *mut c_char, buflen: usize) -> c_int;
++}
++
++pub fn with_description<F, T>(err: Errno, callback: F) -> T
++where
++    F: FnOnce(Result<&str, Errno>) -> T,
++{
++    let mut buf = [0u8; 1024];
++    let rc = unsafe { strerror_r(err.0, buf.as_mut_ptr() as *mut c_char, buf.len()) };
++    if rc != 0 {
++        return callback(Err(err));
++    }
++    let end = buf.iter().position(|&b| b == 0).unwrap_or(buf.len());
++    callback(str::from_utf8(&buf[..end]).map_err(|_| err))
++}
++
++pub const STRERROR_NAME: &str = "strerror_r";
++
++pub fn errno() -> Errno {
++    unsafe { Errno(*__stdc_geterrnoptr()) }
++}
++
++pub fn set_errno(Errno(errno): Errno) {
++    unsafe {
++        *__stdc_geterrnoptr() = errno;
++    }
++}
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/lib.rs b/src/lib.rs
+--- a/src/lib.rs	2026-10-25 02:03:01
++++ b/src/lib.rs	2026-10-25 02:03:01
+@@ -19,7 +19,8 @@
+ 
+ #![cfg_attr(not(feature = "std"), no_std)]
+ 
+-#[cfg_attr(unix, path = "unix.rs")]
++#[cfg_attr(target_os = "aros", path = "aros.rs")]
++#[cfg_attr(all(unix, not(target_os = "aros")), path = "unix.rs")]
+ #[cfg_attr(windows, path = "windows.rs")]
+ #[cfg_attr(target_os = "wasi", path = "wasi.rs")]
+ #[cfg_attr(target_os = "hermit", path = "hermit.rs")]

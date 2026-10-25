@@ -1,0 +1,273 @@
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/lib.rs b/src/lib.rs
+--- a/src/lib.rs	2026-10-25 02:03:03
++++ b/src/lib.rs	2026-10-25 02:03:03
+@@ -55,32 +55,32 @@
+ 
+ #![allow(clippy::len_without_is_empty, clippy::missing_safety_doc)]
+ 
+-#[cfg_attr(unix, path = "unix.rs")]
++#[cfg_attr(all(unix, not(target_os = "aros")), path = "unix.rs")]
+ #[cfg_attr(windows, path = "windows.rs")]
+-#[cfg_attr(not(any(unix, windows)), path = "stub.rs")]
++#[cfg_attr(any(not(any(unix, windows)), target_os = "aros"), path = "stub.rs")]
+ mod os;
+ use crate::os::{file_len, MmapInner};
+ 
+-#[cfg(unix)]
++#[cfg(all(unix, not(target_os = "aros")))]
+ mod advice;
+-#[cfg(unix)]
++#[cfg(all(unix, not(target_os = "aros")))]
+ pub use crate::advice::{Advice, UncheckedAdvice};
+ 
+ use std::fmt;
+-#[cfg(not(any(unix, windows)))]
++#[cfg(any(not(any(unix, windows)), target_os = "aros"))]
+ use std::fs::File;
+ use std::io::{Error, ErrorKind, Result};
+ use std::ops::{Deref, DerefMut};
+-#[cfg(unix)]
++#[cfg(all(unix, not(target_os = "aros")))]
+ use std::os::unix::io::{AsRawFd, RawFd};
+ #[cfg(windows)]
+ use std::os::windows::io::{AsRawHandle, RawHandle};
+ use std::slice;
+ 
+-#[cfg(not(any(unix, windows)))]
++#[cfg(any(not(any(unix, windows)), target_os = "aros"))]
+ pub struct MmapRawDescriptor<'a>(&'a File);
+ 
+-#[cfg(unix)]
++#[cfg(all(unix, not(target_os = "aros")))]
+ pub struct MmapRawDescriptor(RawFd);
+ 
+ #[cfg(windows)]
+@@ -90,21 +90,21 @@
+     fn as_raw_desc(&self) -> MmapRawDescriptor;
+ }
+ 
+-#[cfg(not(any(unix, windows)))]
++#[cfg(any(not(any(unix, windows)), target_os = "aros"))]
+ impl MmapAsRawDesc for &File {
+     fn as_raw_desc(&self) -> MmapRawDescriptor {
+         MmapRawDescriptor(self)
+     }
+ }
+ 
+-#[cfg(unix)]
++#[cfg(all(unix, not(target_os = "aros")))]
+ impl MmapAsRawDesc for RawFd {
+     fn as_raw_desc(&self) -> MmapRawDescriptor {
+         MmapRawDescriptor(*self)
+     }
+ }
+ 
+-#[cfg(unix)]
++#[cfg(all(unix, not(target_os = "aros")))]
+ impl<T> MmapAsRawDesc for &T
+ where
+     T: AsRawFd,
+@@ -807,7 +807,7 @@
+     /// Only supported on Unix.
+     ///
+     /// See [madvise()](https://man7.org/linux/man-pages/man2/madvise.2.html) map page.
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     pub fn advise(&self, advice: Advice) -> Result<()> {
+         self.inner
+             .advise(advice as libc::c_int, 0, self.inner.len())
+@@ -818,7 +818,7 @@
+     /// Used with the [unchecked flags][UncheckedAdvice]. Only supported on Unix.
+     ///
+     /// See [madvise()](https://man7.org/linux/man-pages/man2/madvise.2.html) map page.
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     pub unsafe fn unchecked_advise(&self, advice: UncheckedAdvice) -> Result<()> {
+         self.inner
+             .advise(advice as libc::c_int, 0, self.inner.len())
+@@ -831,7 +831,7 @@
+     /// The offset and length must be in the bounds of the memory map.
+     ///
+     /// See [madvise()](https://man7.org/linux/man-pages/man2/madvise.2.html) map page.
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     pub fn advise_range(&self, advice: Advice, offset: usize, len: usize) -> Result<()> {
+         self.inner.advise(advice as libc::c_int, offset, len)
+     }
+@@ -843,7 +843,7 @@
+     /// The offset and length must be in the bounds of the memory map.
+     ///
+     /// See [madvise()](https://man7.org/linux/man-pages/man2/madvise.2.html) map page.
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     pub unsafe fn unchecked_advise_range(
+         &self,
+         advice: UncheckedAdvice,
+@@ -856,7 +856,7 @@
+     /// Lock the whole memory map into RAM. Only supported on Unix.
+     ///
+     /// See [mlock()](https://man7.org/linux/man-pages/man2/mlock.2.html) map page.
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     pub fn lock(&self) -> Result<()> {
+         self.inner.lock()
+     }
+@@ -864,7 +864,7 @@
+     /// Unlock the whole memory map. Only supported on Unix.
+     ///
+     /// See [munlock()](https://man7.org/linux/man-pages/man2/munlock.2.html) map page.
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     pub fn unlock(&self) -> Result<()> {
+         self.inner.unlock()
+     }
+@@ -1053,7 +1053,7 @@
+     /// Only supported on Unix.
+     ///
+     /// See [madvise()](https://man7.org/linux/man-pages/man2/madvise.2.html) map page.
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     pub fn advise(&self, advice: Advice) -> Result<()> {
+         self.inner
+             .advise(advice as libc::c_int, 0, self.inner.len())
+@@ -1064,7 +1064,7 @@
+     /// Used with the [unchecked flags][UncheckedAdvice]. Only supported on Unix.
+     ///
+     /// See [madvise()](https://man7.org/linux/man-pages/man2/madvise.2.html) map page.
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     pub unsafe fn unchecked_advise(&self, advice: UncheckedAdvice) -> Result<()> {
+         self.inner
+             .advise(advice as libc::c_int, 0, self.inner.len())
+@@ -1077,7 +1077,7 @@
+     /// Only supported on Unix.
+     ///
+     /// See [madvise()](https://man7.org/linux/man-pages/man2/madvise.2.html) map page.
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     pub fn advise_range(&self, advice: Advice, offset: usize, len: usize) -> Result<()> {
+         self.inner.advise(advice as libc::c_int, offset, len)
+     }
+@@ -1089,7 +1089,7 @@
+     /// The offset and length must be in the bounds of the memory map.
+     ///
+     /// See [madvise()](https://man7.org/linux/man-pages/man2/madvise.2.html) map page.
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     pub unsafe fn unchecked_advise_range(
+         &self,
+         advice: UncheckedAdvice,
+@@ -1102,7 +1102,7 @@
+     /// Lock the whole memory map into RAM. Only supported on Unix.
+     ///
+     /// See [mlock()](https://man7.org/linux/man-pages/man2/mlock.2.html) map page.
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     pub fn lock(&self) -> Result<()> {
+         self.inner.lock()
+     }
+@@ -1110,7 +1110,7 @@
+     /// Unlock the whole memory map. Only supported on Unix.
+     ///
+     /// See [munlock()](https://man7.org/linux/man-pages/man2/munlock.2.html) map page.
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     pub fn unlock(&self) -> Result<()> {
+         self.inner.unlock()
+     }
+@@ -1375,7 +1375,7 @@
+     /// Only supported on Unix.
+     ///
+     /// See [madvise()](https://man7.org/linux/man-pages/man2/madvise.2.html) map page.
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     pub fn advise(&self, advice: Advice) -> Result<()> {
+         self.inner
+             .advise(advice as libc::c_int, 0, self.inner.len())
+@@ -1386,7 +1386,7 @@
+     /// Used with the [unchecked flags][UncheckedAdvice]. Only supported on Unix.
+     ///
+     /// See [madvise()](https://man7.org/linux/man-pages/man2/madvise.2.html) map page.
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     pub unsafe fn unchecked_advise(&self, advice: UncheckedAdvice) -> Result<()> {
+         self.inner
+             .advise(advice as libc::c_int, 0, self.inner.len())
+@@ -1399,7 +1399,7 @@
+     /// The offset and length must be in the bounds of the memory map.
+     ///
+     /// See [madvise()](https://man7.org/linux/man-pages/man2/madvise.2.html) map page.
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     pub fn advise_range(&self, advice: Advice, offset: usize, len: usize) -> Result<()> {
+         self.inner.advise(advice as libc::c_int, offset, len)
+     }
+@@ -1411,7 +1411,7 @@
+     /// The offset and length must be in the bounds of the memory map.
+     ///
+     /// See [madvise()](https://man7.org/linux/man-pages/man2/madvise.2.html) map page.
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     pub unsafe fn unchecked_advise_range(
+         &self,
+         advice: UncheckedAdvice,
+@@ -1424,7 +1424,7 @@
+     /// Lock the whole memory map into RAM. Only supported on Unix.
+     ///
+     /// See [mlock()](https://man7.org/linux/man-pages/man2/mlock.2.html) map page.
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     pub fn lock(&self) -> Result<()> {
+         self.inner.lock()
+     }
+@@ -1432,7 +1432,7 @@
+     /// Unlock the whole memory map. Only supported on Unix.
+     ///
+     /// See [munlock()](https://man7.org/linux/man-pages/man2/munlock.2.html) map page.
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     pub fn unlock(&self) -> Result<()> {
+         self.inner.unlock()
+     }
+@@ -1549,12 +1549,12 @@
+ 
+ #[cfg(test)]
+ mod test {
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     use crate::advice::Advice;
+     use std::fs::{File, OpenOptions};
+     use std::io::{Read, Write};
+     use std::mem;
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     use std::os::unix::io::AsRawFd;
+     #[cfg(windows)]
+     use std::os::windows::fs::OpenOptionsExt;
+@@ -1598,7 +1598,7 @@
+     }
+ 
+     #[test]
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     fn map_fd() {
+         let expected_len = 128;
+         let tempdir = tempfile::tempdir().unwrap();
+@@ -2065,7 +2065,7 @@
+     }
+ 
+     #[test]
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     fn advise() {
+         let expected_len = 128;
+         let tempdir = tempfile::tempdir().unwrap();
+@@ -2173,7 +2173,7 @@
+     }
+ 
+     #[test]
+-    #[cfg(unix)]
++    #[cfg(all(unix, not(target_os = "aros")))]
+     fn lock() {
+         let tempdir = tempfile::tempdir().unwrap();
+         let path = tempdir.path().join("mmap_lock");

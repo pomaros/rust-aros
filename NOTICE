@@ -1,0 +1,21 @@
+rust-aros: Rust for native AROS with the official compiler.
+Copyright (c) 2026 John Knipper.
+
+Files are under the MIT License (LICENSE-MIT) unless listed below.
+
+The following derive from the AROS project's Rust port (the
+tools/crosstools/rust patches of the AROS tree, by Nick Andrews and the AROS
+Development Team) and remain under the AROS Public License 1.1 (LICENSE-APL):
+
+  toolchain/rust-src-aros.diff
+  toolchain/aarch64-unknown-aros.json
+  toolchain/include/bsdsocket/native.h  (a copy of the PomAROS AROSTCP header)
+  crates/libc-0.2.190-aros.diff
+  crates/getrandom-0.2.17-aros.diff
+  crates/getrandom-0.3.4-aros.diff
+  crates/getrandom-0.4.3-aros.diff
+  crates/parking_lot_core-0.9.12-aros.diff
+
+The patches modify code that keeps its own license: the Rust standard library
+(MIT OR Apache-2.0) and each crate under crates/ (the license in its
+published package).
