@@ -1,0 +1,30 @@
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/Cargo.toml b/Cargo.toml
+--- a/Cargo.toml	2026-10-25 03:05:48
++++ b/Cargo.toml	2026-10-25 03:06:02
+@@ -4,11 +4,11 @@
+ authors = ["Christian Duerr <contact@christianduerr.com>", "Joe Wilm <joe@jwilm.com>"]
+ license = "Apache-2.0"
+ description = "Library for writing terminal emulators"
+-readme = "../README.md"
+ homepage = "https://alacritty.org"
+ repository = "https://github.com/alacritty/alacritty"
+-edition.workspace = true
+-rust-version.workspace = true
++# The workspace values, so that the crate also builds on its own.
++edition = "2024"
++rust-version = "1.85.0"
+ 
+ [features]
+ default = ["serde"]
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/tty/unix.rs b/src/tty/unix.rs
+--- a/src/tty/unix.rs	2026-10-25 03:05:48
++++ b/src/tty/unix.rs	2026-10-25 03:06:02
+@@ -356,7 +356,7 @@
+     fn drop(&mut self) {
+         // Make sure the PTY is terminated properly.
+         unsafe {
+-            libc::kill(self.child.id() as i32, libc::SIGHUP);
++            libc::kill(self.child.id() as libc::pid_t, libc::SIGHUP);
+         }
+ 
+         // Clear signal-hook handler.

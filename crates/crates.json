@@ -1,4 +1,11 @@
 {
+ "alacritty_terminal-4c129667ce56": {
+  "name": "alacritty_terminal",
+  "version": "0.26.1-dev",
+  "git": "https://github.com/zed-industries/alacritty",
+  "rev": "4c129667ce56611becdc82de6e28218c80e2e88f",
+  "subdir": "alacritty_terminal"
+ },
  "backtrace-0.3.76": {
   "name": "backtrace",
   "version": "0.3.76",
@@ -64,6 +71,11 @@
   "version": "0.9.12",
   "sha256": "2621685985a2ebf1c516881c026032ac7deafcda1a2c9b7850dc81e3dfcb64c1"
  },
+ "ring-0.17.14": {
+  "name": "ring",
+  "version": "0.17.14",
+  "sha256": "a4689e6c2294d81e88dc6261c768b63bc4fcdb852be6d1352498b114f61383b7"
+ },
  "rustix-1.1.4": {
   "name": "rustix",
   "version": "1.1.4",
@@ -79,6 +91,16 @@
   "version": "1.0.228",
   "sha256": "41d385c7d4ca58e59fc732af25c3983b67ac852c1a25000afe1175de458b67ad"
  },
+ "socket2-0.6.5": {
+  "name": "socket2",
+  "version": "0.6.5",
+  "sha256": "c3d1e2c7f27f8d4cb10542a02c49005dbd6e93095799d6f3be745fae9f8fedd4"
+ },
+ "stacker-0.1.25": {
+  "name": "stacker",
+  "version": "0.1.25",
+  "sha256": "707f49d46706bacf8a2b00d51dace3f9de527c13eec3778f570c411f89e69967"
+ },
  "tempfile-3.23.0": {
   "name": "tempfile",
   "version": "3.23.0",
@@ -88,5 +110,10 @@
   "name": "tempfile",
   "version": "3.27.0",
   "sha256": "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
+ },
+ "tokio-1.52.1": {
+  "name": "tokio",
+  "version": "1.52.1",
+  "sha256": "b67dee974fe86fd92cc45b7a95fdd2f99a36a6d7b0d431a231178d3d670bbcc6"
  }
 }

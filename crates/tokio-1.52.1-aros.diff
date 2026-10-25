@@ -1,0 +1,31 @@
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/net/unix/ucred.rs b/src/net/unix/ucred.rs
+--- a/src/net/unix/ucred.rs	2006-07-24 03:21:28
++++ b/src/net/unix/ucred.rs	2026-10-25 03:00:22
+@@ -65,6 +65,9 @@
+ #[cfg(any(target_os = "espidf", target_os = "vita", target_os = "hurd"))]
+ pub(crate) use self::impl_noproc::get_peer_cred;
+ 
++#[cfg(target_os = "aros")]
++pub(crate) use self::impl_aros::get_peer_cred;
++
+ #[cfg(any(
+     target_os = "linux",
+     target_os = "redox",
+@@ -328,5 +331,17 @@
+             gid: 0,
+             pid: None,
+         })
++    }
++}
++
++// The AROS network stack implements no Unix-domain sockets, so there are no
++// peer credentials to report.
++#[cfg(target_os = "aros")]
++pub(crate) mod impl_aros {
++    use crate::net::unix::UnixStream;
++    use std::io;
++
++    pub(crate) fn get_peer_cred(_sock: &UnixStream) -> io::Result<super::UCred> {
++        Err(io::Error::from(io::ErrorKind::Unsupported))
+     }
+ }

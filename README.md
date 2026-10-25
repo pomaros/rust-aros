@@ -10,7 +10,7 @@ and [the Zed port](https://github.com/pomaros/zed) for AROS.
 | Path | What |
 |---|---|
 | [`toolchain/`](toolchain/README.md) | the pinned official nightly (`channel.json`), the target (`aarch64-unknown-aros.json`), the std patch, the C adapters, `build.py` (builds std and a probe) and `integrate.py` (installs an SDK prefix with `rustc`, `cargo` and the AROS C linker driver) |
-| `crates/` | one `<crate>-<version>-aros.diff` per patched crates.io package (two versions where consumers lock different ones), their pinned checksums (`crates.json`) and `store.py`, which builds the crate store |
+| `crates/` | one `<crate>-<version>-aros.diff` per patched crates.io package (two versions where consumers lock different ones) or git dependency (`<crate>-<commit>`), their pins (`crates.json`: a checksum, or a repository and commit) and `store.py`, which builds the crate store |
 
 ## Building the SDK
 

@@ -1,0 +1,28 @@
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/build.rs b/build.rs
+--- a/build.rs	2006-07-24 03:21:28
++++ b/build.rs	2026-10-25 03:03:29
+@@ -170,6 +170,13 @@
+ // None means "any OS" or "any target". The first match in sequence order is
+ // taken.
+ const ASM_TARGETS: &[AsmTarget] = &[
++    // AROS is ELF/aarch64; use the same asm as Linux (the Rust side references
++    // the aarch64 asm symbols unconditionally, so it must be compiled).
++    AsmTarget {
++        oss: &["aros"],
++        arch: AARCH64,
++        perlasm_format: "linux64",
++    },
+     AsmTarget {
+         oss: LINUX_ABI,
+         arch: AARCH64,
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/rand.rs b/src/rand.rs
+--- a/src/rand.rs	2006-07-24 03:21:28
++++ b/src/rand.rs	2026-10-25 03:03:29
+@@ -125,6 +125,7 @@
+     all(feature = "less-safe-getrandom-custom-or-rdrand", target_os = "none"),
+     all(feature = "less-safe-getrandom-espidf", target_os = "espidf"),
+     target_os = "aix",
++    target_os = "aros",
+     target_os = "android",
+     target_os = "dragonfly",
+     target_os = "freebsd",
