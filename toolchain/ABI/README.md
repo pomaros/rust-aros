@@ -56,3 +56,8 @@ layout checks when updating the SDK. The mutex, condition, rwlock and semaphore
 facades use overallocated aligned storage for pointer-only calls; sufficient
 storage does not establish compatibility for embedding those types in C structs
 or passing arrays whose stride is the native type size.
+
+The layout gate also compares `pthread_condattr_t`, both field offsets/sizes,
+`clockid_t` and the realtime/monotonic clock constants against the actual SDK.
+A stale std libc without the condition-clock field must fail qualification;
+matching socket layouts alone cannot establish thread ABI agreement.
