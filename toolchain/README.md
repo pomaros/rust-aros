@@ -87,7 +87,12 @@ on Linux poll event semantics. IPv4 multicast TTL/loop options use the native
 one-byte payload. Unsupported socketpair and message/ancillary transport report
 explicit errors. Socket-only batch poll uses native operation 17 with a single
 wait context and deadline; POSIX files, DOS pipes and legacy owners return
-EOPNOTSUPP. General POSIX readiness and pipe wakers remain unsupported. See
+EOPNOTSUPP. The stack knows three readiness kinds (IN, PRI, OUT); the adapter
+maps the POSIX band events onto them as BSD sockets do: `POLLRDNORM` is IN,
+`POLLRDBAND` is PRI, `POLLWRNORM` is `POLLOUT` itself, and `POLLWRBAND` is never
+reported. A set that asks for band events reaches the stack as a translated
+copy, so the caller's `events` stay as given and `revents` holds only what was
+asked. General POSIX readiness and pipe wakers remain unsupported. See
 the PomAROS core's native poll tests for the exact
 ERR/HUP/invalid-fd and concurrent-close contract. Process execution retains its
 unsupported implementation. `FD_CLOEXEC` is stored metadata; an execution backend
@@ -106,7 +111,11 @@ The private sysroot contains the compiled target std rlibs. An SDK build also
 provides `libaros_rs_platform.a`, the `aarch64-aros-cc` linker driver and a generated
 `cargo-config.toml` that selects this driver and the SDK's native library path.
 The platform archive contains one provider for unsupported POSIX calls as well
-as the network/file adapters. Both std and application libc declare the same
+as the network/file adapters and the stack adapter. The stack adapter serves
+crates that grow the stack (`stacker`): `aros_rs_stack_lower()` reads the
+task's `tc_SPLower`, and `aros_rs_call_on_stack()` runs a function on a new
+stack through exec's `NewStackSwap()`, because the kernel suspends a task whose
+stack pointer leaves `tc_SPLower..tc_SPUpper`. Both std and application libc declare the same
 explicit adapter symbols; neither exports duplicate C fallback bodies.
 The driver links the AROS adapters through the real target C toolchain; it adds
 no host-library or Linux fallback.

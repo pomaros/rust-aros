@@ -232,7 +232,7 @@ def main():
             shutil.copyfile(args.posix_stubs.resolve(), imported)
             positional_archives.append(str(imported))
         adapters = []
-        for name in ("resolver", "resolver_aros", "socket", "socket_aros", "positioned", "unavailable"):
+        for name in ("resolver", "resolver_aros", "socket", "socket_aros", "positioned", "unavailable", "stack"):
             obj = output / (name + ".o")
             command = [str(tools / "clang"), "--target=aarch64-unknown-aros", "-fno-pic",
                        "-mcmodel=large", "-fno-builtin", "-O2", "-Wall", "-Wextra", "-Werror",
@@ -240,7 +240,7 @@ def main():
                        "-I" + str(private_include), "-I" + str(HERE / "net"),
                        "-I" + str(sdk / "include/aros/posixc"),
                        "-I" + str(sdk / "include/aros/stdc"), "-I" + str(sdk / "include"),
-                       "-c", str(HERE / ({"positioned": "fs", "unavailable": "sys"}.get(name, "net")) / (name + ".c")), "-o", str(obj)]
+                       "-c", str(HERE / ({"positioned": "fs", "unavailable": "sys", "stack": "sys"}.get(name, "net")) / (name + ".c")), "-o", str(obj)]
             (output / (name + "-command.json")).write_text(json.dumps(command, indent=2) + "\n")
             run(command, log=output / (name + "-compile.log"))
             adapters.append(str(obj))
@@ -286,6 +286,7 @@ def main():
                       native_adapter_archive_sha256=digest(native_archive),
                       positioned_adapter_sha256=digest(HERE / "fs/positioned.c"),
                       unavailable_adapter_sha256=digest(HERE / "sys/unavailable.c"),
+                      stack_adapter_sha256=digest(HERE / "sys/stack.c"),
                       positional_import_archives={Path(p).name: digest(Path(p)) for p in positional_archives},
                       cargo_config="cargo-config.toml",
                       native_socket_header_sha256=digest(native_header),
