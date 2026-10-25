@@ -44,14 +44,6 @@ stack provide the interfaces the adapters call (owned sockets through
 bsdsocket vector 139, the POSIX descriptor dispatcher). Other AROS systems run
 code that does not use them.
 
-## Known defects
-
-- The libc patch's `_SC_NPROCESSORS_ONLN`, `_SC_NPROCESSORS_CONF` and
-  `_SC_HOST_NAME_MAX` values (1000, 1001, 72) do not match posixc's
-  `unistd.h`, so `sysconf()` answers for them are wrong.
-- `std::env::vars()` reads `__stdcio_get_environptr()` and comes back empty;
-  it should read `environ`.
-
 ## Tests
 
 ```sh

@@ -297,18 +297,21 @@
      target_os = "fuchsia",
 --- a/library/std/src/sys/env/unix.rs
 +++ b/library/std/src/sys/env/unix.rs
-@@ -53,8 +53,18 @@
+@@ -53,8 +53,21 @@
      unsafe { environ }
  }
  
-+// AROS keeps the process environment behind stdcio.library: the C start-up
-+// registers the address of its `environ` with it, and programs that never did
-+// so get a null pointer back.
++// AROS emulates `environ` only in programs that reference it: the reference
++// links libstdcio.a's definition, whose auto-init registers it with
++// stdcio.library and fills it from the local variables (setenv() keeps it
++// current). Asking stdcio.library for the registered pointer instead gets
++// null, because nothing else in std references the symbol.
 +#[cfg(target_os = "aros")]
 +pub unsafe fn environ() -> *mut *const *const c_char {
-+    static mut EMPTY_ENVIRON: *const *const c_char = crate::ptr::null();
-+    let environ = unsafe { libc::__stdcio_get_environptr() } as *mut *const *const c_char;
-+    if environ.is_null() { &raw mut EMPTY_ENVIRON } else { environ }
++    unsafe extern "C" {
++        static mut environ: *const *const c_char;
++    }
++    &raw mut environ
 +}
 +
  // Use the `environ` static which is part of POSIX.
@@ -717,7 +720,16 @@
          target_os = "openbsd",
 --- a/library/std/src/sys/thread/unix.rs
 +++ b/library/std/src/sys/thread/unix.rs
-@@ -429,7 +429,8 @@
+@@ -161,7 +161,8 @@
+             target_vendor = "apple",
+             target_os = "cygwin",
+             target_os = "redox",
+             target_os = "wasi",
++            target_os = "aros",
+         ) => {
+             #[allow(unused_assignments)]
+             #[allow(unused_mut)]
+@@ -429,7 +430,8 @@
      target_os = "freebsd",
      target_os = "dragonfly",
      target_os = "nuttx",
@@ -1734,9 +1746,9 @@
 +pub const EAI_SYSTEM: c_int = 11;
 +pub const FIOCLEX: c_ulong = 0x20006601;
 +pub const FIONCLEX: c_ulong = 0x20006602;
-+pub const _SC_HOST_NAME_MAX: c_int = 72;
-+pub const _SC_NPROCESSORS_ONLN: c_int = 1000;
-+pub const _SC_NPROCESSORS_CONF: c_int = 1001;
++pub const _SC_HOST_NAME_MAX: c_int = 37;
++pub const _SC_NPROCESSORS_ONLN: c_int = 127;
++pub const _SC_NPROCESSORS_CONF: c_int = 126;
 +
 +pub struct linger {
 +    pub l_onoff: c_int,
