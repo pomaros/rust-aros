@@ -31,7 +31,6 @@ REFUSE(int, setregid, (unsigned int real UNUSED, unsigned int effective UNUSED),
 REFUSE(unsigned int, alarm, (unsigned int seconds UNUSED), UINT_MAX)
 REFUSE(int, killpg, (intptr_t group UNUSED, int signal UNUSED), -1)
 REFUSE(long, fpathconf, (int fd UNUSED, int name UNUSED), -1L)
-REFUSE(int, getrusage, (int resource UNUSED, void *usage UNUSED), -1)
 REFUSE(unsigned int, if_nametoindex, (const char *name UNUSED), 0U)
 REFUSE(int, res_init, (void), -1)
 REFUSE(int, gethostname, (char *name UNUSED, size_t size UNUSED), -1)
@@ -52,7 +51,6 @@ int aros_rs_ttyname_r(int fd UNUSED, char *buffer UNUSED, size_t size UNUSED)
     return ENOSYS;
 }
 REFUSE(int, tcsetpgrp, (int fd UNUSED, intptr_t group UNUSED), -1)
-REFUSE(char *, mkdtemp, (char *template UNUSED), NULL)
 REFUSE(void *, mmap, (void *addr UNUSED, size_t size UNUSED, int prot UNUSED,
                      int flags UNUSED, int fd UNUSED, long offset UNUSED), (void *)(intptr_t)-1)
 

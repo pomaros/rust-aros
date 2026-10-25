@@ -17,9 +17,6 @@ static void *worker(void *arg)
         errno = EINVAL;
         assert(aros_rs_if_nametoindex("unavailable") == 0 && errno == ENOSYS);
         errno = EINVAL;
-        assert(aros_rs_mkdtemp(name) == NULL && errno == ENOSYS);
-        assert(strcmp(name, "RAM:unchanged-XXXXXX") == 0);
-        errno = EINVAL;
         assert(aros_rs_gethostname(name, sizeof(name)) == -1 && errno == ENOSYS);
         assert(strcmp(name, "RAM:unchanged-XXXXXX") == 0);
         errno = EINVAL;

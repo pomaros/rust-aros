@@ -170,7 +170,8 @@ checks the installed generation's external SDK/tool hashes before and after
 compilation, so a shared SDK rebuild cannot silently change the qualified inputs.
 `--application-libc /path/to/patched-libc-0.2.190` qualifies the application
 store alongside std's internal 0.2.189. The probe also checks zero/NULL error
-sentinels and ENOSYS for unsupported interface-name lookup and mkdtemp.
+sentinels and ENOSYS for unsupported interface-name lookup, creates and
+removes a directory with mkdtemp and reads getrusage(RUSAGE_SELF).
 
 ## Runtime diagnostic
 

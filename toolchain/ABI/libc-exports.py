@@ -54,9 +54,13 @@ if a.binary:
     r = subprocess.run([str(tools / 'bin/llvm-nm'), '--defined-only', str(a.binary.resolve())],
                        text=True, stdout=subprocess.PIPE, check=True)
     symbols = [line.split()[-1] for line in r.stdout.splitlines() if line.split()]
-    for name in ('poll', 'if_nametoindex', 'mkdtemp'):
+    for name in ('poll', 'if_nametoindex'):
         if symbols.count('aros_rs_' + name) != 1:
             problems.append('native provider count: ' + name)
+    # The C library provides these; no refusing adapter may stand in for it.
+    for name in ('mkdtemp', 'getrusage'):
+        if 'aros_rs_' + name in symbols or name not in symbols:
+            problems.append('C library provider: ' + name)
 if any(digest(Path(name)) != expected for name, expected in before.items()):
     raise RuntimeError('libc inputs changed during export qualification')
 report = {'verdict': 'FAIL' if code or problems else 'PASS',

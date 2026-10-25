@@ -30,10 +30,16 @@ fn main() {
     assert_eq!(unsafe { libc::poll(std::ptr::null_mut(), 0, 0) }, 0);
     assert_eq!(unsafe { libc::if_nametoindex(c"unavailable".as_ptr()) }, 0);
     assert_eq!(std::io::Error::last_os_error().raw_os_error(), Some(libc::ENOSYS));
-    let mut template = *b"RAM:unsupported-XXXXXX\0";
-    assert!(unsafe { libc::mkdtemp(template.as_mut_ptr().cast()) }.is_null());
-    assert_eq!(std::io::Error::last_os_error().raw_os_error(), Some(libc::ENOSYS));
-    assert_eq!(&template, b"RAM:unsupported-XXXXXX\0");
+    // mkdtemp and getrusage come from the C library.
+    let mut template = *b"RAM:rust-probe-XXXXXX\0";
+    let made = unsafe { libc::mkdtemp(template.as_mut_ptr().cast()) };
+    assert_eq!(made, template.as_mut_ptr().cast());
+    assert!(!template.ends_with(b"XXXXXX\0"));
+    let made = std::str::from_utf8(&template[..template.len() - 1]).unwrap();
+    assert!(std::fs::metadata(made).unwrap().is_dir());
+    std::fs::remove_dir(made).unwrap();
+    let mut usage: libc::rusage = unsafe { std::mem::zeroed() };
+    assert_eq!(unsafe { libc::getrusage(libc::RUSAGE_SELF, &mut usage) }, 0);
     // FileExt must preserve the cursor across duplicated descriptors and
     // concurrent positioned operations, using the native shared-fcb lock.
     use std::fs::OpenOptions;
