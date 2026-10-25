@@ -77,9 +77,9 @@ def main():
         revision = git('rev-parse', a.revision + '^{commit}').decode().strip()
         files = exported_files(revision)
         if a.check:
-            target = a.check.resolve(strict=True)
-            if target.is_symlink():
+            if a.check.is_symlink():
                 raise ValueError('component must be a real directory')
+            target = a.check.resolve(strict=True)
             actual = {x.relative_to(target).as_posix() for x in target.rglob('*')
                       if x.is_file() or x.is_symlink()}
             if actual != files.keys():
