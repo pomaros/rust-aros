@@ -20,7 +20,7 @@ it. Application builds must verify the installed manifest before using it.
 
 ## Inputs and provenance
 
-- `aarch64-unknown-aros.json` expresses the integrated Rust 1.98.1 AROS target
+- `aarch64-unknown-aros.json` expresses the official nightly Rust 1.99 AROS target
   parameters, including Unix-family std selection, large code model, static
   relocation, inline stack probes, aborting panics and native x18 use.
   Automatic GDB script emission is disabled: its weak reference produces GOT
