@@ -30,6 +30,11 @@ and `aros-official-rust.json`, which records every input and output hash. An
 application builds with Cargo through that prefix and points its
 `[patch.crates-io]` entries for the patched crates at `STORE/<crate>-<version>`.
 
+## Other architectures
+
+The toolchain targets AArch64. [Adding an architecture](docs/adding-an-architecture.md)
+lists what depends on the CPU and how to verify a new one.
+
 ## Hosted AROS
 
 PomAROS Hosted runs AROS as a macOS process and reserves `x18` for the host;
