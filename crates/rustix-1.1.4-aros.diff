@@ -1,29 +1,6 @@
-diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/event/poll_fd.rs b/src/backend/libc/event/poll_fd.rs
---- a/src/backend/libc/event/poll_fd.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/event/poll_fd.rs	2026-10-25 02:03:03
-@@ -23,15 +23,19 @@
-         /// `POLLOUT`
-         const OUT = c::POLLOUT;
-         /// `POLLRDNORM`
-+        #[cfg(not(target_os = "aros"))]
-         const RDNORM = c::POLLRDNORM;
-         /// `POLLWRNORM`
-         #[cfg(not(target_os = "l4re"))]
-+        #[cfg(not(target_os = "aros"))]
-         const WRNORM = c::POLLWRNORM;
-         /// `POLLRDBAND`
-         #[cfg(not(any(target_os = "l4re", target_os = "wasi")))]
-+        #[cfg(not(target_os = "aros"))]
-         const RDBAND = c::POLLRDBAND;
-         /// `POLLWRBAND`
-         #[cfg(not(any(target_os = "l4re", target_os = "wasi")))]
-+        #[cfg(not(target_os = "aros"))]
-         const WRBAND = c::POLLWRBAND;
-         /// `POLLERR`
-         const ERR = c::POLLERR;
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/event/syscalls.rs b/src/backend/libc/event/syscalls.rs
---- a/src/backend/libc/event/syscalls.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/event/syscalls.rs	2026-10-25 02:03:03
+--- a/src/backend/libc/event/syscalls.rs	2006-07-24 03:21:28
++++ b/src/backend/libc/event/syscalls.rs	2026-10-25 02:41:54
 @@ -485,7 +485,7 @@
      unsafe { ret(c::port_send(borrowed_fd(port), events, userdata)) }
  }
@@ -34,8 +11,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
      let r = unsafe { c::pause() };
      let errno = libc_errno::errno().0;
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/fs/dir.rs b/src/backend/libc/fs/dir.rs
---- a/src/backend/libc/fs/dir.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/fs/dir.rs	2026-10-25 02:03:03
+--- a/src/backend/libc/fs/dir.rs	2006-07-24 03:21:28
++++ b/src/backend/libc/fs/dir.rs	2026-10-25 02:41:54
 @@ -23,6 +23,7 @@
      target_os = "vita",
      target_os = "wasi",
@@ -53,8 +30,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
          fstatfs(unsafe { BorrowedFd::borrow_raw(c::dirfd(self.libc_dir.as_ptr())) })
      }
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/fs/mod.rs b/src/backend/libc/fs/mod.rs
---- a/src/backend/libc/fs/mod.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/fs/mod.rs	2026-10-25 02:03:03
+--- a/src/backend/libc/fs/mod.rs	2006-07-24 03:21:28
++++ b/src/backend/libc/fs/mod.rs	2026-10-25 02:41:54
 @@ -9,6 +9,7 @@
      target_os = "vita",
      target_os = "wasi"
@@ -64,8 +41,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
  #[cfg(not(windows))]
  pub(crate) mod syscalls;
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/fs/syscalls.rs b/src/backend/libc/fs/syscalls.rs
---- a/src/backend/libc/fs/syscalls.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/fs/syscalls.rs	2026-10-25 02:03:03
+--- a/src/backend/libc/fs/syscalls.rs	2006-07-24 03:21:28
++++ b/src/backend/libc/fs/syscalls.rs	2026-10-25 02:41:54
 @@ -48,6 +48,7 @@
      target_os = "vita",
      target_os = "wasi",
@@ -287,8 +264,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
  
  pub(crate) fn ftruncate(fd: BorrowedFd<'_>, length: u64) -> io::Result<()> {
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/fs/types.rs b/src/backend/libc/fs/types.rs
---- a/src/backend/libc/fs/types.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/fs/types.rs	2026-10-25 02:03:03
+--- a/src/backend/libc/fs/types.rs	2006-07-24 03:21:28
++++ b/src/backend/libc/fs/types.rs	2026-10-25 02:41:54
 @@ -785,6 +785,7 @@
              target_os = "hurd",
              target_os = "wasi",
@@ -383,8 +360,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
  
  /// `struct statvfs` for use with [`statvfs`] and [`fstatvfs`].
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/io/errno.rs b/src/backend/libc/io/errno.rs
---- a/src/backend/libc/io/errno.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/io/errno.rs	2026-10-25 02:03:03
+--- a/src/backend/libc/io/errno.rs	2006-07-24 03:21:28
++++ b/src/backend/libc/io/errno.rs	2026-10-25 02:41:54
 @@ -57,6 +57,7 @@
          target_os = "vita",
          target_os = "wasi",
@@ -770,8 +747,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
  }
  
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/io/syscalls.rs b/src/backend/libc/io/syscalls.rs
---- a/src/backend/libc/io/syscalls.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/io/syscalls.rs	2026-10-25 02:03:03
+--- a/src/backend/libc/io/syscalls.rs	2006-07-24 03:21:28
++++ b/src/backend/libc/io/syscalls.rs	2026-10-25 02:41:54
 @@ -72,6 +72,10 @@
  
  #[cfg(not(any(target_os = "espidf", target_os = "horizon")))]
@@ -868,22 +845,9 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
      }
  }
  
-diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/mod.rs b/src/backend/libc/mod.rs
---- a/src/backend/libc/mod.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/mod.rs	2026-10-25 02:03:03
-@@ -153,7 +153,9 @@
- #[cfg(feature = "system")]
- pub(crate) mod system;
- #[cfg(not(any(windows, target_os = "horizon", target_os = "vita")))]
-+// Gated off on AROS alongside the public `termios` module (no tty layer).
- #[cfg(feature = "termios")]
-+#[cfg(not(target_os = "aros"))]
- pub(crate) mod termios;
- #[cfg(not(windows))]
- #[cfg(feature = "thread")]
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/net/addr.rs b/src/backend/libc/net/addr.rs
---- a/src/backend/libc/net/addr.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/net/addr.rs	2026-10-25 02:03:03
+--- a/src/backend/libc/net/addr.rs	2006-07-24 03:21:28
++++ b/src/backend/libc/net/addr.rs	2026-10-25 02:41:54
 @@ -22,7 +22,7 @@
  #[doc(alias = "sockaddr_un")]
  pub struct SocketAddrUnix {
@@ -1001,8 +965,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
              target_os = "haiku",
              target_os = "horizon",
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/net/ext.rs b/src/backend/libc/net/ext.rs
---- a/src/backend/libc/net/ext.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/net/ext.rs	2026-10-25 02:03:03
+--- a/src/backend/libc/net/ext.rs	2006-07-24 03:21:28
++++ b/src/backend/libc/net/ext.rs	2026-10-25 02:41:54
 @@ -80,6 +80,7 @@
  pub(crate) const fn sockaddr_in6_new(
      #[cfg(any(
@@ -1020,8 +984,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
              target_os = "espidf",
              target_os = "haiku",
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/net/msghdr.rs b/src/backend/libc/net/msghdr.rs
---- a/src/backend/libc/net/msghdr.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/net/msghdr.rs	2026-10-25 02:03:03
+--- a/src/backend/libc/net/msghdr.rs	2006-07-24 03:21:28
++++ b/src/backend/libc/net/msghdr.rs	2026-10-25 02:41:54
 @@ -50,6 +50,7 @@
  /// Convert the value to a `socklen_t`.
  #[cfg(any(
@@ -1048,8 +1012,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
      // SAFETY: We can't initialize all the fields by value because on some
      // platforms the `msghdr` struct in the libc crate contains private padding
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/net/read_sockaddr.rs b/src/backend/libc/net/read_sockaddr.rs
---- a/src/backend/libc/net/read_sockaddr.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/net/read_sockaddr.rs	2026-10-25 02:03:03
+--- a/src/backend/libc/net/read_sockaddr.rs	2006-07-24 03:21:28
++++ b/src/backend/libc/net/read_sockaddr.rs	2026-10-25 02:41:54
 @@ -21,6 +21,7 @@
  pub(crate) struct sockaddr_header {
      #[cfg(any(
@@ -1099,8 +1063,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
              target_os = "espidf",
              target_os = "haiku",
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/net/send_recv.rs b/src/backend/libc/net/send_recv.rs
---- a/src/backend/libc/net/send_recv.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/net/send_recv.rs	2026-10-25 02:03:03
+--- a/src/backend/libc/net/send_recv.rs	2006-07-24 03:21:28
++++ b/src/backend/libc/net/send_recv.rs	2026-10-25 02:41:54
 @@ -25,6 +25,7 @@
              target_os = "redox",
              target_os = "vita",
@@ -1126,8 +1090,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
          /// `MSG_OOB`
          const OOB = bitcast!(c::MSG_OOB);
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/net/syscalls.rs b/src/backend/libc/net/syscalls.rs
---- a/src/backend/libc/net/syscalls.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/net/syscalls.rs	2026-10-25 02:03:03
+--- a/src/backend/libc/net/syscalls.rs	2006-07-24 03:21:28
++++ b/src/backend/libc/net/syscalls.rs	2026-10-25 02:41:54
 @@ -293,6 +293,10 @@
      target_os = "vita",
  )))]
@@ -1169,8 +1133,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
  }
  
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/net/write_sockaddr.rs b/src/backend/libc/net/write_sockaddr.rs
---- a/src/backend/libc/net/write_sockaddr.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/net/write_sockaddr.rs	2026-10-25 02:03:03
+--- a/src/backend/libc/net/write_sockaddr.rs	2006-07-24 03:21:28
++++ b/src/backend/libc/net/write_sockaddr.rs	2026-10-25 02:41:54
 @@ -9,6 +9,7 @@
      c::sockaddr_in {
          #[cfg(any(
@@ -1196,8 +1160,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
          target_os = "espidf",
          target_os = "haiku",
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/pipe/syscalls.rs b/src/backend/libc/pipe/syscalls.rs
---- a/src/backend/libc/pipe/syscalls.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/pipe/syscalls.rs	2026-10-25 02:03:03
+--- a/src/backend/libc/pipe/syscalls.rs	2006-07-24 03:21:28
++++ b/src/backend/libc/pipe/syscalls.rs	2026-10-25 02:41:54
 @@ -42,6 +42,10 @@
      target_os = "wasi"
  )))]
@@ -1219,8 +1183,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
  }
  
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/pipe/types.rs b/src/backend/libc/pipe/types.rs
---- a/src/backend/libc/pipe/types.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/pipe/types.rs	2026-10-25 02:03:03
+--- a/src/backend/libc/pipe/types.rs	2006-07-24 03:21:28
++++ b/src/backend/libc/pipe/types.rs	2026-10-25 02:41:54
 @@ -27,6 +27,7 @@
              target_os = "redox",
              target_os = "vita",
@@ -1230,8 +1194,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
          /// `O_NONBLOCK`
          const NONBLOCK = bitcast!(c::O_NONBLOCK);
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/process/syscalls.rs b/src/backend/libc/process/syscalls.rs
---- a/src/backend/libc/process/syscalls.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/process/syscalls.rs	2026-10-25 02:03:03
+--- a/src/backend/libc/process/syscalls.rs	2006-07-24 03:21:28
++++ b/src/backend/libc/process/syscalls.rs	2026-10-25 02:41:54
 @@ -107,7 +107,7 @@
  #[must_use]
  pub(crate) fn getppid() -> Option<Pid> {
@@ -1434,8 +1398,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
      }
  }
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/process/types.rs b/src/backend/libc/process/types.rs
---- a/src/backend/libc/process/types.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/process/types.rs	2026-10-25 02:03:03
+--- a/src/backend/libc/process/types.rs	2006-07-24 03:21:28
++++ b/src/backend/libc/process/types.rs	2026-10-25 02:41:54
 @@ -46,14 +46,17 @@
          target_os = "haiku",
          target_os = "nto",
@@ -1503,8 +1467,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
  }
  
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/process/wait.rs b/src/backend/libc/process/wait.rs
---- a/src/backend/libc/process/wait.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/process/wait.rs	2026-10-25 02:03:03
+--- a/src/backend/libc/process/wait.rs	2006-07-24 03:21:28
++++ b/src/backend/libc/process/wait.rs	2026-10-25 02:41:54
 @@ -5,7 +5,9 @@
  };
  
@@ -1523,8 +1487,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
 +#[cfg(not(target_os = "aros"))]
  pub(crate) use c::{WEXITED, WNOWAIT, WSTOPPED};
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/backend/libc/time/syscalls.rs b/src/backend/libc/time/syscalls.rs
---- a/src/backend/libc/time/syscalls.rs	2026-10-25 02:03:03
-+++ b/src/backend/libc/time/syscalls.rs	2026-10-25 02:03:03
+--- a/src/backend/libc/time/syscalls.rs	2006-07-24 03:21:28
++++ b/src/backend/libc/time/syscalls.rs	2026-10-25 02:41:54
 @@ -56,6 +56,7 @@
  #[cfg(not(any(target_os = "redox", target_os = "wasi")))]
  #[inline]
@@ -1554,8 +1518,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
  }
  
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/event/mod.rs b/src/event/mod.rs
---- a/src/event/mod.rs	2026-10-25 02:03:03
-+++ b/src/event/mod.rs	2026-10-25 02:03:03
+--- a/src/event/mod.rs	2006-07-24 03:21:28
++++ b/src/event/mod.rs	2026-10-25 02:41:54
 @@ -11,7 +11,7 @@
  mod eventfd;
  #[cfg(bsd)]
@@ -1575,8 +1539,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
  pub use poll::{poll, PollFd, PollFlags};
  #[cfg(any(bsd, linux_kernel, windows, target_os = "wasi"))]
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/fs/abs.rs b/src/fs/abs.rs
---- a/src/fs/abs.rs	2026-10-25 02:03:03
-+++ b/src/fs/abs.rs	2026-10-25 02:03:03
+--- a/src/fs/abs.rs	2006-07-24 03:21:28
++++ b/src/fs/abs.rs	2026-10-25 02:41:54
 @@ -14,6 +14,7 @@
      target_os = "vita",
      target_os = "wasi",
@@ -1594,8 +1558,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
      path.into_with_c_str(backend::fs::syscalls::statfs)
  }
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/fs/at.rs b/src/fs/at.rs
---- a/src/fs/at.rs	2026-10-25 02:03:03
-+++ b/src/fs/at.rs	2026-10-25 02:03:03
+--- a/src/fs/at.rs	2006-07-24 03:21:28
++++ b/src/fs/at.rs	2026-10-25 02:41:54
 @@ -46,6 +46,7 @@
      target_os = "redox",
      target_os = "vita"
@@ -1613,8 +1577,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
  
  /// `openat(dirfd, path, oflags, mode)`—Opens a file.
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/fs/fd.rs b/src/fs/fd.rs
---- a/src/fs/fd.rs	2026-10-25 02:03:03
-+++ b/src/fs/fd.rs	2026-10-25 02:03:03
+--- a/src/fs/fd.rs	2006-07-24 03:21:28
++++ b/src/fs/fd.rs	2026-10-25 02:41:54
 @@ -39,6 +39,7 @@
      target_os = "vita",
      target_os = "wasi",
@@ -1632,8 +1596,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
      backend::fs::syscalls::fstatfs(fd.as_fd())
  }
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/fs/mod.rs b/src/fs/mod.rs
---- a/src/fs/mod.rs	2026-10-25 02:03:03
-+++ b/src/fs/mod.rs	2026-10-25 02:03:03
+--- a/src/fs/mod.rs	2006-07-24 03:21:28
++++ b/src/fs/mod.rs	2026-10-25 02:41:54
 @@ -40,6 +40,7 @@
      target_os = "vita",
      target_os = "wasi"
@@ -1651,8 +1615,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
  #[cfg(any(linux_kernel, target_os = "freebsd"))]
  pub use memfd_create::memfd_create;
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/ioctl/mod.rs b/src/ioctl/mod.rs
---- a/src/ioctl/mod.rs	2026-10-25 02:03:03
-+++ b/src/ioctl/mod.rs	2026-10-25 02:03:03
+--- a/src/ioctl/mod.rs	2006-07-24 03:21:28
++++ b/src/ioctl/mod.rs	2026-10-25 02:41:54
 @@ -316,6 +316,7 @@
  // BSD, Haiku, Hurd, Redox, and Vita use `unsigned long`.
  #[cfg(any(
@@ -1661,24 +1625,9 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
      target_os = "redox",
      target_os = "haiku",
      target_os = "horizon",
-diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/lib.rs b/src/lib.rs
---- a/src/lib.rs	2026-10-25 02:03:03
-+++ b/src/lib.rs	2026-10-25 02:03:03
-@@ -295,7 +295,10 @@
- #[cfg(not(any(windows, target_os = "wasi")))]
- #[cfg_attr(docsrs, doc(cfg(feature = "system")))]
- pub mod system;
--#[cfg(not(any(windows, target_os = "horizon", target_os = "vita")))]
-+// AROS has no tty/termios layer at all, and nothing in this tree calls into
-+// it; compiling the module would only require ~130 constants that could never
-+// do anything.
-+#[cfg(not(any(windows, target_os = "horizon", target_os = "vita", target_os = "aros")))]
- #[cfg(feature = "termios")]
- #[cfg_attr(docsrs, doc(cfg(feature = "termios")))]
- pub mod termios;
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/maybe_polyfill/std/mod.rs b/src/maybe_polyfill/std/mod.rs
---- a/src/maybe_polyfill/std/mod.rs	2026-10-25 02:03:03
-+++ b/src/maybe_polyfill/std/mod.rs	2026-10-25 02:03:03
+--- a/src/maybe_polyfill/std/mod.rs	2006-07-24 03:21:28
++++ b/src/maybe_polyfill/std/mod.rs	2026-10-25 02:41:54
 @@ -27,6 +27,8 @@
          pub use std::os::unix::io::{
              AsFd, AsRawFd, BorrowedFd, FromRawFd, IntoRawFd, OwnedFd, RawFd,
@@ -1689,8 +1638,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
  
      #[cfg(windows)]
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/net/types.rs b/src/net/types.rs
---- a/src/net/types.rs	2026-10-25 02:03:03
-+++ b/src/net/types.rs	2026-10-25 02:03:03
+--- a/src/net/types.rs	2006-07-24 03:21:28
++++ b/src/net/types.rs	2026-10-25 02:41:54
 @@ -123,6 +123,7 @@
          target_os = "redox",
          target_os = "vita",
@@ -1972,8 +1921,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
      /// `IPPROTO_ROUTING`
      #[cfg(not(any(
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/path/arg.rs b/src/path/arg.rs
---- a/src/path/arg.rs	2026-10-25 02:03:03
-+++ b/src/path/arg.rs	2026-10-25 02:03:03
+--- a/src/path/arg.rs	2006-07-24 03:21:28
++++ b/src/path/arg.rs	2026-10-25 02:41:54
 @@ -19,6 +19,8 @@
  use std::os::hermit::ext::ffi::{OsStrExt, OsStringExt};
  #[cfg(all(feature = "std", unix))]
@@ -1984,8 +1933,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
  use std::os::vxworks::ext::ffi::{OsStrExt, OsStringExt};
  #[cfg(all(
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/path/dec_int.rs b/src/path/dec_int.rs
---- a/src/path/dec_int.rs	2026-10-25 02:03:03
-+++ b/src/path/dec_int.rs	2026-10-25 02:03:03
+--- a/src/path/dec_int.rs	2006-07-24 03:21:28
++++ b/src/path/dec_int.rs	2026-10-25 02:41:54
 @@ -14,6 +14,8 @@
  use core::num::{NonZeroU8, NonZeroUsize};
  #[cfg(all(feature = "std", unix))]
@@ -1996,8 +1945,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
      feature = "std",
      target_os = "wasi",
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/pid.rs b/src/pid.rs
---- a/src/pid.rs	2026-10-25 02:03:03
-+++ b/src/pid.rs	2026-10-25 02:03:03
+--- a/src/pid.rs	2006-07-24 03:21:28
++++ b/src/pid.rs	2026-10-25 02:41:54
 @@ -2,10 +2,18 @@
  
  #![allow(unsafe_code)]
@@ -2028,8 +1977,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
  
      /// Converts a `Pid` into a `NonZeroI32`.
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/pipe.rs b/src/pipe.rs
---- a/src/pipe.rs	2026-10-25 02:03:03
-+++ b/src/pipe.rs	2026-10-25 02:03:03
+--- a/src/pipe.rs	2006-07-24 03:21:28
++++ b/src/pipe.rs	2026-10-25 02:41:54
 @@ -42,7 +42,7 @@
      target_os = "vita",
      target_os = "wasi",
@@ -2040,8 +1989,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
  /// `pipe()`—Creates a pipe.
  ///
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/process/ioctl.rs b/src/process/ioctl.rs
---- a/src/process/ioctl.rs	2026-10-25 02:03:03
-+++ b/src/process/ioctl.rs	2026-10-25 02:03:03
+--- a/src/process/ioctl.rs	2006-07-24 03:21:28
++++ b/src/process/ioctl.rs	2026-10-25 02:41:54
 @@ -24,6 +24,7 @@
  /// [OpenBSD]: https://man.openbsd.org/tty.4
  #[cfg(not(any(
@@ -2067,8 +2016,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
      target_os = "horizon",
      target_os = "redox",
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/process/wait.rs b/src/process/wait.rs
---- a/src/process/wait.rs	2026-10-25 02:03:03
-+++ b/src/process/wait.rs	2026-10-25 02:03:03
+--- a/src/process/wait.rs	2006-07-24 03:21:28
++++ b/src/process/wait.rs	2026-10-25 02:41:54
 @@ -34,6 +34,7 @@
          ///
          /// [`Signal::Cont`]: crate::process::Signal::Cont
@@ -2108,8 +2057,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
      }
  }
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/signal.rs b/src/signal.rs
---- a/src/signal.rs	2026-10-25 02:03:03
-+++ b/src/signal.rs	2026-10-25 02:03:03
+--- a/src/signal.rs	2006-07-24 03:21:28
++++ b/src/signal.rs	2026-10-25 03:02:38
 @@ -108,6 +108,7 @@
              ),
          ),
@@ -2118,20 +2067,7 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
      pub const STKFLT: Self = Self(unsafe { NonZeroI32::new_unchecked(c::SIGSTKFLT) });
      /// `SIGCHLD`
      #[cfg(not(target_os = "vita"))]
-@@ -146,10 +147,12 @@
-     pub const PROF: Self = Self(unsafe { NonZeroI32::new_unchecked(c::SIGPROF) });
-     /// `SIGWINCH`
-     #[cfg(not(target_os = "vita"))]
-+    #[cfg(not(target_os = "aros"))]
-     pub const WINCH: Self = Self(unsafe { NonZeroI32::new_unchecked(c::SIGWINCH) });
-     /// `SIGIO`, aka `SIGPOLL`
-     #[doc(alias = "POLL")]
-     #[cfg(not(any(target_os = "haiku", target_os = "vita")))]
-+    #[cfg(not(target_os = "aros"))]
-     pub const IO: Self = Self(unsafe { NonZeroI32::new_unchecked(c::SIGIO) });
-     /// `SIGPWR`
-     #[cfg(not(any(
-@@ -160,6 +163,7 @@
+@@ -160,6 +161,7 @@
          target_os = "vita"
      )))]
      #[doc(alias = "PWR")]
@@ -2139,7 +2075,7 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
      pub const POWER: Self = Self(unsafe { NonZeroI32::new_unchecked(c::SIGPWR) });
      /// `SIGSYS`, aka `SIGUNUSED`
      #[doc(alias = "UNUSED")]
-@@ -329,6 +333,7 @@
+@@ -329,6 +331,7 @@
                      ),
                  )
              )))]
@@ -2147,18 +2083,7 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
              c::SIGSTKFLT => Some(Self::STKFLT),
              #[cfg(not(target_os = "vita"))]
              c::SIGCHLD => Some(Self::CHILD),
-@@ -353,8 +358,10 @@
-             #[cfg(not(target_os = "vita"))]
-             c::SIGPROF => Some(Self::PROF),
-             #[cfg(not(target_os = "vita"))]
-+            #[cfg(not(target_os = "aros"))]
-             c::SIGWINCH => Some(Self::WINCH),
-             #[cfg(not(any(target_os = "haiku", target_os = "vita")))]
-+            #[cfg(not(target_os = "aros"))]
-             c::SIGIO => Some(Self::IO),
-             #[cfg(not(any(
-                 bsd,
-@@ -363,6 +370,7 @@
+@@ -363,6 +366,7 @@
                  target_os = "hurd",
                  target_os = "vita"
              )))]
@@ -2166,7 +2091,7 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
              c::SIGPWR => Some(Self::POWER),
              c::SIGSYS => Some(Self::SYS),
              #[cfg(any(
-@@ -437,6 +445,7 @@
+@@ -437,6 +441,7 @@
                      ),
                  ),
              )))]
@@ -2174,18 +2099,7 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
              Self::STKFLT => "Signal::STKFLT".fmt(f),
              #[cfg(not(target_os = "vita"))]
              Self::CHILD => "Signal::CHILD".fmt(f),
-@@ -461,8 +470,10 @@
-             #[cfg(not(target_os = "vita"))]
-             Self::PROF => "Signal::PROF".fmt(f),
-             #[cfg(not(target_os = "vita"))]
-+            #[cfg(not(target_os = "aros"))]
-             Self::WINCH => "Signal::WINCH".fmt(f),
-             #[cfg(not(any(target_os = "haiku", target_os = "vita")))]
-+            #[cfg(not(target_os = "aros"))]
-             Self::IO => "Signal::IO".fmt(f),
-             #[cfg(not(any(
-                 bsd,
-@@ -471,6 +482,7 @@
+@@ -471,6 +476,7 @@
                  target_os = "hurd",
                  target_os = "vita"
              )))]
@@ -2193,9 +2107,397 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
              Self::POWER => "Signal::POWER".fmt(f),
              Self::SYS => "Signal::SYS".fmt(f),
              #[cfg(any(
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/termios/ioctl.rs b/src/termios/ioctl.rs
+--- a/src/termios/ioctl.rs	2006-07-24 03:21:28
++++ b/src/termios/ioctl.rs	2026-10-25 02:46:10
+@@ -23,6 +23,7 @@
+ /// [OpenBSD]: https://man.openbsd.org/tty.4
+ #[cfg(not(any(
+     windows,
++    target_os = "aros",
+     target_os = "horizon",
+     target_os = "redox",
+     target_os = "wasi"
+@@ -51,6 +52,7 @@
+ /// [OpenBSD]: https://man.openbsd.org/tty.4
+ #[cfg(not(any(
+     windows,
++    target_os = "aros",
+     target_os = "horizon",
+     target_os = "redox",
+     target_os = "wasi"
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/termios/types.rs b/src/termios/types.rs
+--- a/src/termios/types.rs	2006-07-24 03:21:28
++++ b/src/termios/types.rs	2026-10-25 02:46:10
+@@ -290,6 +290,7 @@
+ 
+         /// `IMAXBEL`
+         #[cfg(not(any(target_os = "haiku", target_os = "redox")))]
++        #[cfg(not(target_os = "aros"))]
+         const IMAXBEL = c::IMAXBEL;
+ 
+         /// `IUTF8`
+@@ -303,6 +304,7 @@
+             target_os = "hurd",
+             target_os = "redox",
+         )))]
++        #[cfg(not(target_os = "aros"))]
+         const IUTF8 = c::IUTF8;
+ 
+         /// <https://docs.rs/bitflags/*/bitflags/#externally-defined-flags>
+@@ -326,6 +328,7 @@
+             target_os = "netbsd",
+             target_os = "redox",
+         )))]
++        #[cfg(not(target_os = "aros"))]
+         const OLCUC = c::OLCUC;
+ 
+         /// `ONLCR`
+@@ -461,6 +464,7 @@
+             target_os = "haiku",
+             target_os = "redox",
+         )))]
++        #[cfg(not(target_os = "aros"))]
+         const XTABS = c::XTABS;
+ 
+         /// `BSDLY`
+@@ -571,6 +575,7 @@
+ 
+         /// `CRTSCTS`
+         #[cfg(not(any(target_os = "aix", target_os = "nto", target_os = "redox")))]
++        #[cfg(not(target_os = "aros"))]
+         const CRTSCTS = c::CRTSCTS;
+ 
+         /// `CMSPAR`
+@@ -584,6 +589,7 @@
+             target_os = "nto",
+             target_os = "redox",
+         )))]
++        #[cfg(not(target_os = "aros"))]
+         const CMSPAR = c::CMSPAR;
+ 
+         /// <https://docs.rs/bitflags/*/bitflags/#externally-defined-flags>
+@@ -602,22 +608,27 @@
+ 
+         /// `ECHOCTL`
+         #[cfg(not(target_os = "redox"))]
++        #[cfg(not(target_os = "aros"))]
+         const ECHOCTL = c::ECHOCTL;
+ 
+         /// `ECHOPRT`
+         #[cfg(not(any(target_os = "cygwin", target_os = "nto", target_os = "redox")))]
++        #[cfg(not(target_os = "aros"))]
+         const ECHOPRT = c::ECHOPRT;
+ 
+         /// `ECHOKE`
+         #[cfg(not(target_os = "redox"))]
++        #[cfg(not(target_os = "aros"))]
+         const ECHOKE = c::ECHOKE;
+ 
+         /// `FLUSHO`
+         #[cfg(not(any(target_os = "nto", target_os = "redox")))]
++        #[cfg(not(target_os = "aros"))]
+         const FLUSHO = c::FLUSHO;
+ 
+         /// `PENDIN`
+         #[cfg(not(any(target_os = "cygwin", target_os = "nto", target_os = "redox")))]
++        #[cfg(not(target_os = "aros"))]
+         const PENDIN = c::PENDIN;
+ 
+         /// `EXTPROC`
+@@ -628,6 +639,7 @@
+             target_os = "nto",
+             target_os = "redox",
+         )))]
++        #[cfg(not(target_os = "aros"))]
+         const EXTPROC = c::EXTPROC;
+ 
+         /// `ISIG`
+@@ -860,10 +872,13 @@
+             c::B19200 => Some(19200),
+             c::B38400 => Some(38400),
+             #[cfg(not(target_os = "aix"))]
++            #[cfg(not(target_os = "aros"))]
+             c::B57600 => Some(57600),
+             #[cfg(not(target_os = "aix"))]
++            #[cfg(not(target_os = "aros"))]
+             c::B115200 => Some(115_200),
+             #[cfg(not(any(target_os = "aix", target_os = "nto")))]
++            #[cfg(not(target_os = "aros"))]
+             c::B230400 => Some(230_400),
+             #[cfg(not(any(
+                 apple,
+@@ -873,6 +888,7 @@
+                 target_os = "nto",
+                 target_os = "openbsd"
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             c::B460800 => Some(460_800),
+             #[cfg(not(any(
+                 bsd,
+@@ -881,6 +897,7 @@
+                 target_os = "haiku",
+                 target_os = "nto"
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             c::B500000 => Some(500_000),
+             #[cfg(not(any(
+                 bsd,
+@@ -889,6 +906,7 @@
+                 target_os = "haiku",
+                 target_os = "nto"
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             c::B576000 => Some(576_000),
+             #[cfg(not(any(
+                 apple,
+@@ -898,6 +916,7 @@
+                 target_os = "nto",
+                 target_os = "openbsd"
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             c::B921600 => Some(921_600),
+             #[cfg(not(any(
+                 bsd,
+@@ -906,6 +925,7 @@
+                 target_os = "nto",
+                 target_os = "solaris"
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             c::B1000000 => Some(1_000_000),
+             #[cfg(not(any(
+                 bsd,
+@@ -914,6 +934,7 @@
+                 target_os = "nto",
+                 target_os = "solaris"
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             c::B1152000 => Some(1_152_000),
+             #[cfg(not(any(
+                 bsd,
+@@ -922,6 +943,7 @@
+                 target_os = "nto",
+                 target_os = "solaris"
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             c::B1500000 => Some(1_500_000),
+             #[cfg(not(any(
+                 bsd,
+@@ -930,6 +952,7 @@
+                 target_os = "nto",
+                 target_os = "solaris"
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             c::B2000000 => Some(2_000_000),
+             #[cfg(not(any(
+                 target_arch = "sparc",
+@@ -940,6 +963,7 @@
+                 target_os = "nto",
+                 target_os = "solaris",
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             c::B2500000 => Some(2_500_000),
+             #[cfg(not(any(
+                 target_arch = "sparc",
+@@ -950,6 +974,7 @@
+                 target_os = "nto",
+                 target_os = "solaris",
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             c::B3000000 => Some(3_000_000),
+             #[cfg(not(any(
+                 target_arch = "sparc",
+@@ -961,6 +986,7 @@
+                 target_os = "nto",
+                 target_os = "solaris",
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             c::B3500000 => Some(3_500_000),
+             #[cfg(not(any(
+                 target_arch = "sparc",
+@@ -972,6 +998,7 @@
+                 target_os = "nto",
+                 target_os = "solaris",
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             c::B4000000 => Some(4_000_000),
+             _ => None,
+         }
+@@ -999,10 +1026,13 @@
+             19200 => Some(c::B19200),
+             38400 => Some(c::B38400),
+             #[cfg(not(target_os = "aix"))]
++            #[cfg(not(target_os = "aros"))]
+             57600 => Some(c::B57600),
+             #[cfg(not(target_os = "aix"))]
++            #[cfg(not(target_os = "aros"))]
+             115_200 => Some(c::B115200),
+             #[cfg(not(any(target_os = "aix", target_os = "nto")))]
++            #[cfg(not(target_os = "aros"))]
+             230_400 => Some(c::B230400),
+             #[cfg(not(any(
+                 apple,
+@@ -1012,6 +1042,7 @@
+                 target_os = "nto",
+                 target_os = "openbsd",
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             460_800 => Some(c::B460800),
+             #[cfg(not(any(
+                 bsd,
+@@ -1020,6 +1051,7 @@
+                 target_os = "haiku",
+                 target_os = "nto"
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             500_000 => Some(c::B500000),
+             #[cfg(not(any(
+                 bsd,
+@@ -1028,6 +1060,7 @@
+                 target_os = "haiku",
+                 target_os = "nto"
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             576_000 => Some(c::B576000),
+             #[cfg(not(any(
+                 apple,
+@@ -1037,6 +1070,7 @@
+                 target_os = "nto",
+                 target_os = "openbsd"
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             921_600 => Some(c::B921600),
+             #[cfg(not(any(
+                 bsd,
+@@ -1045,6 +1079,7 @@
+                 target_os = "nto",
+                 target_os = "solaris"
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             1_000_000 => Some(c::B1000000),
+             #[cfg(not(any(
+                 bsd,
+@@ -1053,6 +1088,7 @@
+                 target_os = "nto",
+                 target_os = "solaris"
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             1_152_000 => Some(c::B1152000),
+             #[cfg(not(any(
+                 bsd,
+@@ -1061,6 +1097,7 @@
+                 target_os = "nto",
+                 target_os = "solaris"
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             1_500_000 => Some(c::B1500000),
+             #[cfg(not(any(
+                 bsd,
+@@ -1069,6 +1106,7 @@
+                 target_os = "nto",
+                 target_os = "solaris"
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             2_000_000 => Some(c::B2000000),
+             #[cfg(not(any(
+                 target_arch = "sparc",
+@@ -1079,6 +1117,7 @@
+                 target_os = "nto",
+                 target_os = "solaris",
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             2_500_000 => Some(c::B2500000),
+             #[cfg(not(any(
+                 target_arch = "sparc",
+@@ -1089,6 +1128,7 @@
+                 target_os = "nto",
+                 target_os = "solaris",
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             3_000_000 => Some(c::B3000000),
+             #[cfg(not(any(
+                 target_arch = "sparc",
+@@ -1100,6 +1140,7 @@
+                 target_os = "nto",
+                 target_os = "solaris",
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             3_500_000 => Some(c::B3500000),
+             #[cfg(not(any(
+                 target_arch = "sparc",
+@@ -1111,6 +1152,7 @@
+                 target_os = "nto",
+                 target_os = "solaris",
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             4_000_000 => Some(c::B4000000),
+             _ => None,
+         }
+@@ -1214,6 +1256,7 @@
+         target_os = "hurd",
+         target_os = "nto",
+     )))]
++    #[cfg(not(target_os = "aros"))]
+     pub const VSWTC: Self = Self(c::VSWTC as usize);
+ 
+     /// `VSTART`
+@@ -1230,21 +1273,26 @@
+ 
+     /// `VREPRINT`
+     #[cfg(not(target_os = "haiku"))]
++    #[cfg(not(target_os = "aros"))]
+     pub const VREPRINT: Self = Self(c::VREPRINT as usize);
+ 
+     /// `VDISCARD`
+     #[cfg(not(any(target_os = "aix", target_os = "haiku")))]
++    #[cfg(not(target_os = "aros"))]
+     pub const VDISCARD: Self = Self(c::VDISCARD as usize);
+ 
+     /// `VWERASE`
+     #[cfg(not(any(target_os = "aix", target_os = "haiku")))]
++    #[cfg(not(target_os = "aros"))]
+     pub const VWERASE: Self = Self(c::VWERASE as usize);
+ 
+     /// `VLNEXT`
+     #[cfg(not(target_os = "haiku"))]
++    #[cfg(not(target_os = "aros"))]
+     pub const VLNEXT: Self = Self(c::VLNEXT as usize);
+ 
+     /// `VEOL2`
++    #[cfg(not(target_os = "aros"))]
+     pub const VEOL2: Self = Self(c::VEOL2 as usize);
+ 
+     /// `VSWTCH`
+@@ -1324,6 +1372,7 @@
+                 target_os = "hurd",
+                 target_os = "nto",
+             )))]
++            #[cfg(not(target_os = "aros"))]
+             Self::VSWTC => write!(f, "VSWTC"),
+             Self::VSTART => write!(f, "VSTART"),
+             Self::VSTOP => write!(f, "VSTOP"),
+@@ -1336,13 +1385,18 @@
+             )))]
+             Self::VEOL => write!(f, "VEOL"),
+             #[cfg(not(target_os = "haiku"))]
++            #[cfg(not(target_os = "aros"))]
+             Self::VREPRINT => write!(f, "VREPRINT"),
+             #[cfg(not(any(target_os = "aix", target_os = "haiku")))]
++            #[cfg(not(target_os = "aros"))]
+             Self::VDISCARD => write!(f, "VDISCARD"),
+             #[cfg(not(any(target_os = "aix", target_os = "haiku")))]
++            #[cfg(not(target_os = "aros"))]
+             Self::VWERASE => write!(f, "VWERASE"),
+             #[cfg(not(target_os = "haiku"))]
++            #[cfg(not(target_os = "aros"))]
+             Self::VLNEXT => write!(f, "VLNEXT"),
++            #[cfg(not(target_os = "aros"))]
+             Self::VEOL2 => write!(f, "VEOL2"),
+             #[cfg(any(solarish, target_os = "haiku", target_os = "nto"))]
+             Self::VSWTCH => write!(f, "VSWTCH"),
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/time/clock.rs b/src/time/clock.rs
---- a/src/time/clock.rs	2026-10-25 02:03:03
-+++ b/src/time/clock.rs	2026-10-25 02:03:03
+--- a/src/time/clock.rs	2006-07-24 03:21:28
++++ b/src/time/clock.rs	2026-10-25 02:41:54
 @@ -27,6 +27,7 @@
  #[cfg(not(any(target_os = "redox", target_os = "wasi")))]
  #[inline]
