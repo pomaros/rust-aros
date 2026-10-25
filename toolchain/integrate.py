@@ -195,8 +195,18 @@ def main():
                              ('aarch64-aros-cc', native / 'aarch64-aros-cc'),
                              ('rustdoc', host / 'bin/rustdoc')):
         arguments = [str(executable)]
+        if name == 'rustc':
+            # Invoke the official binary directly: an intermediate /bin/sh
+            # clears DYLD_* variables on Darwin before it reaches rustc.
+            arguments = [str(compiler), '--sysroot', str(native / 'sysroot')]
         if name == 'rustdoc':
             arguments += ['--sysroot', str(native / 'sysroot')]
+        # Official Darwin rust-objcopy looks for libLLVM through a relative
+        # rpath that misses the compiler's top-level lib directory. Keep all
+        # upstream binaries unchanged and supply that directory to child
+        # loader lookups, scoped to this SDK invocation only.
+        if a.host_triple.endswith('-apple-darwin') and name in ('rustc', 'cargo', 'rustdoc'):
+            arguments = ['env', 'DYLD_FALLBACK_LIBRARY_PATH=' + str(host / 'lib'), *arguments]
         write(prefix / 'bin' / name, '#!/bin/sh\nexec ' + shlex.join(arguments) + ' "$@"\n', True)
     write(prefix / 'cargo-config.toml', '[target.aarch64-unknown-aros]\nlinker = ' +
           json.dumps(str(prefix / 'bin/aarch64-aros-cc')) + '\nrustflags = [' +

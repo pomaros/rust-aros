@@ -10,6 +10,14 @@ directory; `integrate.py` fetches the pinned official components and installs
 an SDK prefix around such a build. Nothing in the compiler, bootstrap or
 rustdoc is patched.
 
+On Darwin hosts, installed Rust/Cargo/rustdoc wrappers supply the official host
+`lib` directory as `DYLD_FALLBACK_LIBRARY_PATH` for their process tree. This
+allows rust-objcopy to load the LLVM library shipped by the same compiler
+component. No binary, install name or system-wide loader setting is changed.
+The component installation belongs to the SDK work directory unless an explicit
+read-only `--host-root` is selected; keep that directory while the SDK references
+it. Application builds must verify the installed manifest before using it.
+
 ## Inputs and provenance
 
 - `aarch64-unknown-aros.json` expresses the integrated Rust 1.98.1 AROS target
