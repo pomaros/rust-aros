@@ -1,0 +1,26 @@
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/aws-lc/crypto/fipsmodule/cpucap/cpu_aarch64_linux.c b/aws-lc/crypto/fipsmodule/cpucap/cpu_aarch64_linux.c
+--- a/aws-lc/crypto/fipsmodule/cpucap/cpu_aarch64_linux.c	2006-07-24 03:21:28
++++ b/aws-lc/crypto/fipsmodule/cpucap/cpu_aarch64_linux.c	2026-10-25 03:47:35
+@@ -3,10 +3,15 @@
+ 
+ #include "internal.h"
+ 
+-#if defined(OPENSSL_AARCH64) && defined(OPENSSL_LINUX) && \
++// AROS answers getauxval(AT_HWCAP/AT_HWCAP2) with the Linux bit numbers.
++#if defined(OPENSSL_AARCH64) && (defined(OPENSSL_LINUX) || defined(__AROS__)) && \
+     !defined(OPENSSL_STATIC_ARMCAP)
+ 
++#if defined(__AROS__)
++#include <sys/auxv.h>
++#else
+ #include "cpu_getauxval_linux.h"
++#endif
+ 
+ #ifndef __STDC_FORMAT_MACROS
+ #define __STDC_FORMAT_MACROS
+@@ -121,4 +126,4 @@
+   OPENSSL_cpucap_initialized = 1;
+ }
+ 
+-#endif  // OPENSSL_AARCH64 && OPENSSL_LINUX && !OPENSSL_STATIC_ARMCAP
++#endif  // OPENSSL_AARCH64 && (OPENSSL_LINUX || __AROS__) && !OPENSSL_STATIC_ARMCAP
