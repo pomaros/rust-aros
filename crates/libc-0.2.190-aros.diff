@@ -1,6 +1,6 @@
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/new/aros/mod.rs b/src/new/aros/mod.rs
 --- a/src/new/aros/mod.rs	1970-01-01 01:00:00
-+++ b/src/new/aros/mod.rs	2026-10-25 02:41:07
++++ b/src/new/aros/mod.rs	2026-10-25 03:47:15
 @@ -0,0 +1,5 @@
 +//! AROS C library (posixc.library / stdc.library).
 +// See src/unix/aros for the bindings; this module only carries the
@@ -9,7 +9,7 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
 +pub(crate) mod unistd;
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/new/aros/unistd.rs b/src/new/aros/unistd.rs
 --- a/src/new/aros/unistd.rs	1970-01-01 01:00:00
-+++ b/src/new/aros/unistd.rs	2026-10-25 02:41:07
++++ b/src/new/aros/unistd.rs	2026-10-25 03:47:15
 @@ -0,0 +1,7 @@
 +//! Header: `unistd.h`
 +
@@ -20,7 +20,7 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
 +};
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/new/mod.rs b/src/new/mod.rs
 --- a/src/new/mod.rs	2006-07-24 03:21:28
-+++ b/src/new/mod.rs	2026-10-25 02:41:07
++++ b/src/new/mod.rs	2026-10-25 03:47:15
 @@ -72,6 +72,9 @@
      } else if #[cfg(target_os = "haiku")] {
          mod haiku;
@@ -33,8 +33,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
          pub(crate) use helenos::*;
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/unix/aros/mod.rs b/src/unix/aros/mod.rs
 --- a/src/unix/aros/mod.rs	1970-01-01 01:00:00
-+++ b/src/unix/aros/mod.rs	2026-10-25 03:05:10
-@@ -0,0 +1,1247 @@
++++ b/src/unix/aros/mod.rs	2026-10-25 03:47:15
+@@ -0,0 +1,1254 @@
 +//! Bindings for the AROS C library (posixc.library / stdc.library) and
 +//! pthread.library, as shipped in the AROS SDK.
 +//!
@@ -1222,6 +1222,12 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
 +pub const TCOON: c_int = 3;
 +pub const TIOCSWINSZ: c_ulong = 0x80087467;
 +pub const TIOCSCTTY: c_ulong = 0x20007461;
++// sys/auxv.h: getauxval() answers these from the system (no ELF auxiliary
++// vector); AT_HWCAP and AT_HWCAP2 have the Linux AArch64 bit numbers.
++pub const AT_NULL: c_ulong = 0;
++pub const AT_PAGESZ: c_ulong = 6;
++pub const AT_HWCAP: c_ulong = 16;
++pub const AT_HWCAP2: c_ulong = 26;
 +
 +extern "C" {
 +    pub fn utimensat(
@@ -1246,6 +1252,7 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
 +        winp: *const crate::winsize,
 +    ) -> c_int;
 +    pub fn login_tty(fd: c_int) -> c_int;
++    pub fn getauxval(type_: c_ulong) -> c_ulong;
 +}
 +
 +// AROS sys/socket.h aligns ancillary records with AROS_ALIGN (16 bytes on
@@ -1284,7 +1291,7 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
 +pub use aros_cmsg::*;
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/unix/mod.rs b/src/unix/mod.rs
 --- a/src/unix/mod.rs	2006-07-24 03:21:28
-+++ b/src/unix/mod.rs	2026-10-25 02:41:07
++++ b/src/unix/mod.rs	2026-10-25 03:47:15
 @@ -15,7 +15,14 @@
  pub type ssize_t = isize;
  
