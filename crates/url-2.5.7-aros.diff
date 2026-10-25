@@ -1,0 +1,117 @@
+diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/lib.rs b/src/lib.rs
+--- a/src/lib.rs	2006-07-24 03:21:28
++++ b/src/lib.rs	2026-10-25 03:15:24
+@@ -2943,7 +2943,8 @@
+ 
+ #[cfg(all(
+     feature = "std",
+-    any(unix, target_os = "redox", target_os = "wasi", target_os = "hermit")
++    any(unix, target_os = "redox", target_os = "wasi", target_os = "hermit"),
++    not(target_os = "aros")
+ ))]
+ fn path_to_file_url_segments(
+     path: &Path,
+@@ -2982,6 +2983,93 @@
+     Ok((host_end, HostInternal::None))
+ }
+ 
++// AROS paths are DOS paths: a volume or assign name, a colon, then names
++// separated by '/', where an empty name is a parent reference ("RAM:a//b" is
++// "RAM:b"). The URL keeps the whole path, volume included, after the "file:///"
++// of a local URL: "RAM:dir/f.rs" is "file:///RAM%3Adir/f.rs". The colon is
++// escaped so that a one-letter volume is never read as a Windows drive, and
++// empty names stay as empty segments. "." and ".." are ordinary names in DOS
++// but URL parsing would remove them, so a path that has them is refused.
++#[cfg(all(feature = "std", target_os = "aros"))]
++fn aros_native_path(bytes: &[u8]) -> bool {
++    let Some(colon) = bytes.iter().position(|&byte| byte == b':') else {
++        return false;
++    };
++    colon > 0
++        && !bytes[..colon].contains(&b'/')
++        && !bytes.contains(&0)
++        && !bytes[colon + 1..].contains(&b':')
++        && bytes
++            .split(|&byte| byte == b'/')
++            .skip(1)
++            .all(|name| name != b"." && name != b"..")
++}
++
++#[cfg(all(feature = "std", target_os = "aros"))]
++fn path_to_file_url_segments(
++    path: &Path,
++    serialization: &mut String,
++) -> Result<(u32, HostInternal), ()> {
++    use percent_encoding::{percent_encode, AsciiSet, NON_ALPHANUMERIC};
++    use std::os::unix::ffi::OsStrExt;
++    const NAME: &AsciiSet = &NON_ALPHANUMERIC
++        .remove(b'-')
++        .remove(b'.')
++        .remove(b'_')
++        .remove(b'~');
++    let bytes = path.as_os_str().as_bytes();
++    if !aros_native_path(bytes) {
++        return Err(());
++    }
++    let host_end = to_u32(serialization.len()).unwrap();
++    for name in bytes.split(|&byte| byte == b'/') {
++        serialization.push('/');
++        serialization.extend(percent_encode(name, NAME));
++    }
++    Ok((host_end, HostInternal::None))
++}
++
++#[cfg(all(feature = "std", target_os = "aros"))]
++fn file_url_segments_to_pathbuf(
++    estimated_capacity: usize,
++    host: Option<&str>,
++    segments: str::Split<'_, char>,
++) -> Result<PathBuf, ()> {
++    use alloc::vec::Vec;
++    use percent_encoding::percent_decode;
++    use std::ffi::OsStr;
++    use std::os::unix::ffi::OsStrExt;
++
++    if host.is_some() {
++        return Err(());
++    }
++    let mut bytes = Vec::new();
++    bytes.try_reserve(estimated_capacity).map_err(|_| ())?;
++    for (index, segment) in segments.enumerate() {
++        let encoded = segment.as_bytes();
++        let malformed = encoded.iter().enumerate().any(|(offset, &byte)| {
++            byte == b'%'
++                && !(encoded.get(offset + 1).is_some_and(u8::is_ascii_hexdigit)
++                    && encoded.get(offset + 2).is_some_and(u8::is_ascii_hexdigit))
++        });
++        if malformed {
++            return Err(());
++        }
++        if index > 0 {
++            bytes.push(b'/');
++        }
++        let start = bytes.len();
++        bytes.extend(percent_decode(encoded));
++        if bytes[start..].contains(&b'/') {
++            return Err(());
++        }
++    }
++    if !aros_native_path(&bytes) {
++        return Err(());
++    }
++    Ok(PathBuf::from(OsStr::from_bytes(&bytes)))
++}
++
+ #[cfg(all(feature = "std", windows))]
+ fn path_to_file_url_segments(
+     path: &Path,
+@@ -3059,7 +3147,8 @@
+ 
+ #[cfg(all(
+     feature = "std",
+-    any(unix, target_os = "redox", target_os = "wasi", target_os = "hermit")
++    any(unix, target_os = "redox", target_os = "wasi", target_os = "hermit"),
++    not(target_os = "aros")
+ ))]
+ fn file_url_segments_to_pathbuf(
+     estimated_capacity: usize,
