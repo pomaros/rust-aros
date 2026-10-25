@@ -1,6 +1,6 @@
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/new/aros/mod.rs b/src/new/aros/mod.rs
 --- a/src/new/aros/mod.rs	1970-01-01 01:00:00
-+++ b/src/new/aros/mod.rs	2026-10-25 02:03:02
++++ b/src/new/aros/mod.rs	2026-10-25 02:41:07
 @@ -0,0 +1,5 @@
 +//! AROS C library (posixc.library / stdc.library).
 +// See src/unix/aros for the bindings; this module only carries the
@@ -9,7 +9,7 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
 +pub(crate) mod unistd;
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/new/aros/unistd.rs b/src/new/aros/unistd.rs
 --- a/src/new/aros/unistd.rs	1970-01-01 01:00:00
-+++ b/src/new/aros/unistd.rs	2026-10-25 02:03:02
++++ b/src/new/aros/unistd.rs	2026-10-25 02:41:07
 @@ -0,0 +1,7 @@
 +//! Header: `unistd.h`
 +
@@ -19,8 +19,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
 +    STDOUT_FILENO,
 +};
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/new/mod.rs b/src/new/mod.rs
---- a/src/new/mod.rs	2026-10-25 02:03:01
-+++ b/src/new/mod.rs	2026-10-25 02:03:02
+--- a/src/new/mod.rs	2006-07-24 03:21:28
++++ b/src/new/mod.rs	2026-10-25 02:41:07
 @@ -72,6 +72,9 @@
      } else if #[cfg(target_os = "haiku")] {
          mod haiku;
@@ -33,8 +33,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
          pub(crate) use helenos::*;
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/unix/aros/mod.rs b/src/unix/aros/mod.rs
 --- a/src/unix/aros/mod.rs	1970-01-01 01:00:00
-+++ b/src/unix/aros/mod.rs	2026-10-25 02:03:01
-@@ -0,0 +1,1164 @@
++++ b/src/unix/aros/mod.rs	2026-10-25 03:05:10
+@@ -0,0 +1,1247 @@
 +//! Bindings for the AROS C library (posixc.library / stdc.library) and
 +//! pthread.library, as shipped in the AROS SDK.
 +//!
@@ -420,10 +420,10 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
 +pub const EBUSY: c_int = 16;
 +pub const ECANCELED: c_int = 87;
 +pub const ECHILD: c_int = 10;
-+pub const ECHO: c_int = 1;
-+pub const ECHOE: c_int = 2;
-+pub const ECHOK: c_int = 4;
-+pub const ECHONL: c_int = 8;
++pub const ECHO: tcflag_t = 1;
++pub const ECHOE: tcflag_t = 2;
++pub const ECHOK: tcflag_t = 4;
++pub const ECHONL: tcflag_t = 8;
 +pub const ECONNABORTED: c_int = 53;
 +pub const ECONNREFUSED: c_int = 61;
 +pub const ECONNRESET: c_int = 54;
@@ -1162,8 +1162,91 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
 +        pub imr_sourceaddr: in_addr,
 +        pub imr_interface: in_addr,
 +    }
++
++    pub struct ip_mreqn {
++        pub imr_multiaddr: in_addr,
++        pub imr_address: in_addr,
++        pub imr_ifindex: c_int,
++    }
 +}
 +extern "C" { pub fn sync(); }
++
++// POSIX porting surface: the SDK headers declare these and posixc provides
++// them (sys/stat.h, sys/time.h, signal.h, unistd.h, netinet/in.h, pthread.h,
++// pty.h). Signals that AROS does not generate yet still have their numbers;
++// the pseudo-terminal calls fail with ENOSYS until AROS has a
++// pseudo-terminal device.
++pub const _SC_PAGE_SIZE: c_int = 53;
++pub const SIGWINCH: c_int = 27;
++pub const SIGIO: c_int = 30;
++pub const SIGPOLL: c_int = 30;
++pub const UTIME_NOW: c_long = (1 << 30) - 1;
++pub const UTIME_OMIT: c_long = (1 << 30) - 2;
++pub const IP_RECVTOS: c_int = 68;
++pub const IPV6_RECVTCLASS: c_int = 57;
++// poll() band events, BSD values; the platform adapter maps them onto the
++// stack's IN, PRI and OUT readiness kinds.
++pub const POLLRDNORM: c_short = 0x40;
++pub const POLLRDBAND: c_short = 0x80;
++pub const POLLWRNORM: c_short = 0x4;
++pub const POLLWRBAND: c_short = 0x100;
++// termios.h output delays, line control, and sys/ioctl.h TIOCSWINSZ.
++pub const NLDLY: tcflag_t = 0o200;
++pub const NL0: tcflag_t = 0;
++pub const NL1: tcflag_t = 0o200;
++pub const CRDLY: tcflag_t = 0o1400;
++pub const CR0: tcflag_t = 0;
++pub const CR1: tcflag_t = 0o400;
++pub const CR2: tcflag_t = 0o1000;
++pub const CR3: tcflag_t = 0o1400;
++pub const TABDLY: tcflag_t = 0o6000;
++pub const TAB0: tcflag_t = 0;
++pub const TAB1: tcflag_t = 0o2000;
++pub const TAB2: tcflag_t = 0o4000;
++pub const TAB3: tcflag_t = 0o6000;
++pub const BSDLY: tcflag_t = 0o10000;
++pub const BS0: tcflag_t = 0;
++pub const BS1: tcflag_t = 0o10000;
++pub const VTDLY: tcflag_t = 0o20000;
++pub const VT0: tcflag_t = 0;
++pub const VT1: tcflag_t = 0o20000;
++pub const FFDLY: tcflag_t = 0o40000;
++pub const FF0: tcflag_t = 0;
++pub const FF1: tcflag_t = 0o40000;
++pub const TCIFLUSH: c_int = 0;
++pub const TCOFLUSH: c_int = 1;
++pub const TCIOFLUSH: c_int = 2;
++pub const TCIOFF: c_int = 0;
++pub const TCION: c_int = 1;
++pub const TCOOFF: c_int = 2;
++pub const TCOON: c_int = 3;
++pub const TIOCSWINSZ: c_ulong = 0x80087467;
++pub const TIOCSCTTY: c_ulong = 0x20007461;
++
++extern "C" {
++    pub fn utimensat(
++        dirfd: c_int,
++        path: *const c_char,
++        times: *const crate::timespec,
++        flag: c_int,
++    ) -> c_int;
++    pub fn futimens(fd: c_int, times: *const crate::timespec) -> c_int;
++    pub fn lutimes(path: *const c_char, times: *const crate::timeval) -> c_int;
++    pub fn futimes(fd: c_int, times: *const crate::timeval) -> c_int;
++    pub fn pthread_atfork(
++        prepare: Option<unsafe extern "C" fn()>,
++        parent: Option<unsafe extern "C" fn()>,
++        child: Option<unsafe extern "C" fn()>,
++    ) -> c_int;
++    pub fn openpty(
++        amaster: *mut c_int,
++        aslave: *mut c_int,
++        name: *mut c_char,
++        termp: *const crate::termios,
++        winp: *const crate::winsize,
++    ) -> c_int;
++    pub fn login_tty(fd: c_int) -> c_int;
++}
 +
 +// AROS sys/socket.h aligns ancillary records with AROS_ALIGN (16 bytes on
 +// aarch64). These helpers only describe buffers; they introduce no C symbols.
@@ -1200,8 +1283,8 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
 +#[cfg(all(target_os = "aros", target_arch = "aarch64"))]
 +pub use aros_cmsg::*;
 diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/unix/mod.rs b/src/unix/mod.rs
---- a/src/unix/mod.rs	2026-10-25 02:03:01
-+++ b/src/unix/mod.rs	2026-10-25 02:03:02
+--- a/src/unix/mod.rs	2006-07-24 03:21:28
++++ b/src/unix/mod.rs	2026-10-25 02:41:07
 @@ -15,7 +15,14 @@
  pub type ssize_t = isize;
  

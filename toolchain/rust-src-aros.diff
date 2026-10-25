@@ -1173,10 +1173,10 @@
 +pub const EBUSY: c_int = 16;
 +pub const ECANCELED: c_int = 87;
 +pub const ECHILD: c_int = 10;
-+pub const ECHO: c_int = 1;
-+pub const ECHOE: c_int = 2;
-+pub const ECHOK: c_int = 4;
-+pub const ECHONL: c_int = 8;
++pub const ECHO: tcflag_t = 1;
++pub const ECHOE: tcflag_t = 2;
++pub const ECHOK: tcflag_t = 4;
++pub const ECHONL: tcflag_t = 8;
 +pub const ECONNABORTED: c_int = 53;
 +pub const ECONNREFUSED: c_int = 61;
 +pub const ECONNRESET: c_int = 54;
