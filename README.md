@@ -39,7 +39,7 @@ unmodified compiler with the platform in std) and are to become one.
 
 ## Runtime
 
-Programs run on PomAROS native and VM systems whose C runtime and network
+Programs run on AROS systems, such as PomAROS VM, whose C runtime and network
 stack provide the interfaces the adapters call (owned sockets through
 bsdsocket vector 139, the POSIX descriptor dispatcher). Other AROS systems run
 code that does not use them.
