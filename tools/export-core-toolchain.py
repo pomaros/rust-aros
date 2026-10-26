@@ -107,9 +107,10 @@ def main():
                 if path.is_symlink() or path.read_bytes() != content:
                     raise ValueError('export content differs: ' + name)
         else:
-            target = a.output.absolute()
-            if target.exists() or target.is_symlink():
+            requested = a.output.expanduser()
+            if requested.exists() or requested.is_symlink():
                 raise ValueError('output must not exist')
+            target = requested.resolve()
             if target == ROOT or ROOT in target.parents:
                 raise ValueError('output must be outside the SDK source repository')
             target.mkdir(parents=True)

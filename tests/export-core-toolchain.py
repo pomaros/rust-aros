@@ -3,6 +3,7 @@
 # Copyright (c) 2026 John Knipper
 """Exercise real SDK export admission and refusal of edited source snapshots."""
 from pathlib import Path
+import os
 import subprocess
 import sys
 import tempfile
@@ -48,6 +49,14 @@ class ExportAdmission(unittest.TestCase):
         link.symlink_to(self.output, target_is_directory=True)
         result = self.command('--check', link, success=False)
         self.assertIn('component must be a real directory', result.stderr)
+
+    def test_relative_output_outside_source_is_admitted(self):
+        target = self.root / 'relative-component'
+        relative = os.path.relpath(target, ROOT)
+        result = subprocess.run([sys.executable, str(TOOL), '--output', relative],
+                                cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.command('--check', target)
 
     def test_existing_output_is_preserved(self):
         manifest = (self.output / 'SOURCE-ORIGIN.json').read_bytes()
