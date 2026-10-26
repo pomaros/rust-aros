@@ -75,3 +75,18 @@ its complete inventory and bytes against that revision.
 the core's shared crate directory; other crate files are outside that component.
 Both components derive from this repository. Edit their source here and export
 an explicit commit instead of editing generated core copies.
+
+The core native crate target also runs the exported
+`verify-application-libc.py` before fetch/patch. The toolchain origin binds the
+application origin and patch digests, so changing the patch and its local
+manifest together does not bypass admission. The admitted patch digest keys
+the native store directory, isolating old generic fetch application markers.
+Hosted keeps its separate profile/store.
+
+```sh
+python3 tests/core-crate-admission.py --core /path/to/aros-core
+```
+
+exercises actual core template generation and parallel GNU make with a fetch
+recorder. `--libc-archive /path/to/libc-0.2.190.crate` adds a real offline
+fetch/patch case after verifying the archive against `crates.json`.

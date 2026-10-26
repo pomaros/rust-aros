@@ -75,6 +75,10 @@ def exported_files(revision, component='toolchain'):
                 'core_native_header': NATIVE_HEADER,
                 'transformations': 'APL notices for owned integration files; authoritative core socket header paths; core command paths in documentation',
                 'files': provenance}
+    application = exported_files(revision, 'application-libc')
+    manifest['application_libc'] = {
+        'origin_sha256': digest(application['NATIVE-LIBC-ORIGIN.json']),
+        'patch_sha256': digest(application['libc-0.2.190-aros-native.diff'])}
     files['SOURCE-ORIGIN.json'] = (json.dumps(manifest, sort_keys=True, indent=2) + '\n').encode()
     return files
 

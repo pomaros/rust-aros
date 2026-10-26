@@ -4,6 +4,7 @@
 """Exercise real SDK export admission and refusal of edited source snapshots."""
 from pathlib import Path
 import os
+import json
 import subprocess
 import sys
 import tempfile
@@ -32,6 +33,9 @@ class ExportAdmission(unittest.TestCase):
         self.assertFalse((self.output / 'include/bsdsocket/native.h').exists())
         self.assertTrue((self.output / 'sys/stack.c').is_file())
         self.assertTrue((self.output / 'poll-probe.rs').is_file())
+        manifest = json.loads((self.output / 'SOURCE-ORIGIN.json').read_text())
+        self.assertIn('origin_sha256', manifest['application_libc'])
+        self.assertIn('patch_sha256', manifest['application_libc'])
 
     def test_edited_adapter_is_refused(self):
         adapter = self.output / 'net/socket.c'
