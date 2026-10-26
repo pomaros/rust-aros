@@ -63,3 +63,15 @@ run the adapters' host suites (fresh output directories).
 
 MIT for this project's files; the files derived from the AROS tree's Rust
 port stay under the AROS Public License 1.1. [NOTICE](NOTICE) lists them.
+
+## Core source exports
+
+`tools/export-core-toolchain.py --revision COMMIT --output DIRECTORY` creates
+an immutable toolchain component for the AROS core. `--check DIRECTORY` verifies
+its complete inventory and bytes against that revision.
+
+`--component application-libc` exports the application libc patch and
+`NATIVE-LIBC-ORIGIN.json`. Its `--check` verifies those two owned files inside
+the core's shared crate directory; other crate files are outside that component.
+Both components derive from this repository. Edit their source here and export
+an explicit commit instead of editing generated core copies.

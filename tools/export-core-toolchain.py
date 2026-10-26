@@ -33,7 +33,20 @@ def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def exported_files(revision):
+def exported_files(revision, component='toolchain'):
+    if component == 'application-libc':
+        source = 'crates/libc-0.2.190-aros.diff'
+        name = 'libc-0.2.190-aros-native.diff'
+        content = git('show', revision + ':' + source)
+        manifest = {'schema': 1, 'component': component,
+                    'source_repository': 'https://github.com/pomaros/rust-aros.git',
+                    'source_revision': revision, 'source_file': source,
+                    'exporter_sha256': digest(Path(__file__).read_bytes()),
+                    'transformations': 'none',
+                    'files': {name: {'source_sha256': digest(content),
+                                     'export_sha256': digest(content)}}}
+        return {name: content, 'NATIVE-LIBC-ORIGIN.json':
+                (json.dumps(manifest, sort_keys=True, indent=2) + '\n').encode()}
     paths = git('ls-tree', '-r', '--name-only', revision, '--', 'toolchain/').decode().splitlines()
     files, provenance = {}, {}
     for path in paths:
@@ -69,21 +82,26 @@ def exported_files(revision):
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--revision', default='HEAD', help='immutable SDK commit to export')
+    p.add_argument('--component', choices=('toolchain', 'application-libc'), default='toolchain')
     action = p.add_mutually_exclusive_group(required=True)
     action.add_argument('--output', type=Path, help='new component directory; never overwrites a core tree')
     action.add_argument('--check', type=Path, help='verify an existing exported component without changing it')
     a = p.parse_args()
     try:
         revision = git('rev-parse', a.revision + '^{commit}').decode().strip()
-        files = exported_files(revision)
+        files = exported_files(revision, a.component)
         if a.check:
             if a.check.is_symlink():
                 raise ValueError('component must be a real directory')
             target = a.check.resolve(strict=True)
             actual = {x.relative_to(target).as_posix() for x in target.rglob('*')
                       if x.is_file() or x.is_symlink()}
-            if actual != files.keys():
-                raise ValueError('export inventory differs: ' + str(sorted(actual ^ files.keys())[:12]))
+            # Application libc shares the core crate directory with other
+            # independently owned crates. Admit only its exact two owned files;
+            # the complete toolchain directory remains a closed inventory.
+            observed = actual if a.component == 'toolchain' else actual & files.keys()
+            if observed != files.keys():
+                raise ValueError('export inventory differs: ' + str(sorted(observed ^ files.keys())[:12]))
             for name, content in files.items():
                 path = target / name
                 if path.is_symlink() or path.read_bytes() != content:
@@ -102,7 +120,7 @@ def main():
                 if name.endswith('.py'):
                     path.chmod(0o755)
         print(json.dumps({'result': 'PASS', 'mode': 'check' if a.check else 'export',
-                          'source_revision': revision, 'files': len(files), 'component': str(target)}))
+                          'source_revision': revision, 'files': len(files), 'component': str(target), 'kind': a.component}))
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         p.exit(1, 'core-toolchain-export: ' + str(error) + '\n')
 

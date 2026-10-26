@@ -55,5 +55,43 @@ class ExportAdmission(unittest.TestCase):
         self.assertEqual((self.output / 'SOURCE-ORIGIN.json').read_bytes(), manifest)
 
 
+class ApplicationLibcAdmission(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix='rust-libc-export-')
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.output = self.root / 'crates'
+        self.command('--output', self.output)
+
+    def command(self, *arguments, success=True):
+        result = subprocess.run([sys.executable, str(TOOL), '--component',
+                                 'application-libc', *map(str, arguments)],
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode == 0, success, result.stdout + result.stderr)
+        return result
+
+    def test_exact_snapshot_and_shared_directory(self):
+        expected = subprocess.check_output(['git', '-C', str(ROOT), 'show',
+                                             'HEAD:crates/libc-0.2.190-aros.diff'])
+        self.assertEqual((self.output / 'libc-0.2.190-aros-native.diff').read_bytes(), expected)
+        (self.output / 'hosted-libc.diff').write_text('independently owned\n')
+        self.command('--check', self.output)
+
+    def test_edited_patch_is_refused(self):
+        patch = self.output / 'libc-0.2.190-aros-native.diff'
+        patch.write_bytes(patch.read_bytes().replace(b'pub cond_clock: clockid_t,', b''))
+        result = self.command('--check', self.output, success=False)
+        self.assertIn('export content differs', result.stderr)
+
+    def test_missing_origin_is_refused(self):
+        (self.output / 'NATIVE-LIBC-ORIGIN.json').unlink()
+        self.command('--check', self.output, success=False)
+
+    def test_symlink_patch_is_refused(self):
+        patch = self.output / 'libc-0.2.190-aros-native.diff'
+        moved = self.root / 'patch'; patch.rename(moved); patch.symlink_to(moved)
+        self.command('--check', self.output, success=False)
+
+
 if __name__ == '__main__':
     unittest.main()
