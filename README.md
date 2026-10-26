@@ -57,7 +57,16 @@ python3 toolchain/net/tests/socket/run.py --output OUT2
 python3 toolchain/sys/test.py --output OUT3
 ```
 
-run the adapters' host suites (fresh output directories).
+run the adapters' host suites (fresh output directories). The ancillary helper
+regression runs against an explicitly selected patched libc source:
+
+```sh
+python3 tests/native-cmsg/host.py --libc /path/to/patched/libc-0.2.190 --output OUT4
+```
+
+It checks actual helper bodies and memory boundaries with selected AArch64
+record declarations on the host. [The probe procedure](tests/native-cmsg/README.md)
+describes the separate target compilation and runtime scope.
 
 ## License
 

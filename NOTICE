@@ -16,6 +16,9 @@ Development Team) and remain under the AROS Public License 1.1 (LICENSE-APL):
   crates/getrandom-0.4.3-aros.diff
   crates/parking_lot_core-0.9.12-aros.diff
 
+The recovered `tests/native-cmsg/` regression files also retain their
+AROS Public License 1.1 notices.
+
 The patches modify code that keeps its own license: the Rust standard library
 (MIT OR Apache-2.0) and each crate under crates/ (the license in its
 published package).
