@@ -14,10 +14,11 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 p = argparse.ArgumentParser(description=__doc__)
 p.add_argument('--core', type=Path, required=True)
-p.add_argument('--make', default='/opt/homebrew/bin/gmake')
+p.add_argument('--make', default=shutil.which('gmake') or shutil.which('make'))
 p.add_argument('--output', type=Path)
 p.add_argument('--libc-archive', type=Path, help='verified local crate for a real offline fetch/patch case')
 a = p.parse_args()
+if not a.make: p.error("GNU make is required; select it with --make")
 results = []
 with tempfile.TemporaryDirectory(prefix='core-libc-admission-') as tmp:
     root = Path(tmp)
@@ -95,7 +96,7 @@ with tempfile.TemporaryDirectory(prefix='core-libc-admission-') as tmp:
             passed = passed and destination == str(wanted)
 
         row = {'case': case, 'result': 'PASS' if passed else 'FAIL', 'make_exit': run.returncode,
-               'fetch_ran': marker.exists(), 'stdout': run.stdout, 'stderr': run.stderr}
+               'fetch_recorder_ran': marker.exists(), 'real_fetch': case == 'real-offline-fetch', 'stdout': run.stdout, 'stderr': run.stderr}
         results.append(row)
         print(case+': '+row['result'], flush=True)
         if not passed: print(run.stdout+run.stderr)
