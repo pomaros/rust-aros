@@ -27,10 +27,12 @@ AROS task or signal ABI.
 `native.rs` is a standalone application with Tokio features `rt-multi-thread`,
 `time`, `net` and `signal`. Build it with the managed AROS SDK and selected crate
 patches. In a disposable guest, require its runtime-construction, spawned-task,
-timer and shutdown marker `TOKIO_NATIVE_NOTIFICATION_RUNTIME_PASS`, Shell
+timer and shutdown marker `TOKIO_NATIVE_NOTIFICATION_SIGNAL_PASS`, Shell
 return zero and the normal strict desktop/capture/quiescence verdict.
 
-That probe does not qualify signal delivery. AROS CRT sigaction callbacks must
-provide valid siginfo before the signal-hook-registry handler can be exercised;
-its Unix handler deliberately aborts on null siginfo. End-to-end registered
-signal delivery and application GUI behavior require separate guest evidence.
+The probe also registers a Tokio SIGUSR1 listener, calls the native CRT raise
+function and requires the notification within a bounded timeout. AROS CRT
+sigaction callbacks must provide valid siginfo; signal-hook-registry deliberately
+aborts on null siginfo. This exercises synchronous callback delivery, not Unix
+asynchronous signals or process groups. Application GUI and physical hardware
+acceptance require their own evidence.
