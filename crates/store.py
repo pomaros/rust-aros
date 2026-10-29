@@ -52,10 +52,16 @@ def main():
     p.add_argument("--output", type=pathlib.Path, required=True, help="new store directory")
     p.add_argument("--cargo-cache", type=pathlib.Path, help="a Cargo registry cache directory to read .crate files from")
     p.add_argument("--offline", action="store_true")
+    p.add_argument("--crate", action="append", dest="selected", help="build only this pinned crate key; repeatable")
     a = p.parse_args()
     if a.output.exists():
         raise SystemExit(f"{a.output} exists; give a new directory")
     pins = json.loads((HERE / "crates.json").read_text())
+    if a.selected:
+        unknown = set(a.selected) - set(pins)
+        if unknown:
+            raise SystemExit("unknown pinned crate: " + ", ".join(sorted(unknown)))
+        pins = {key: pins[key] for key in set(a.selected)}
     a.output.mkdir(parents=True)
     for nv, pin in sorted(pins.items()):
         if "git" in pin:

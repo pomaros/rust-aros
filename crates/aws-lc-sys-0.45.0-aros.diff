@@ -24,3 +24,15 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
  
 -#endif  // OPENSSL_AARCH64 && OPENSSL_LINUX && !OPENSSL_STATIC_ARMCAP
 +#endif  // OPENSSL_AARCH64 && (OPENSSL_LINUX || __AROS__) && !OPENSSL_STATIC_ARMCAP
+--- a/aws-lc/third_party/s2n-bignum/s2n-bignum-to-be-imported/arm/aes/aes-xts-enc.S
++++ b/aws-lc/third_party/s2n-bignum/s2n-bignum-to-be-imported/arm/aes/aes-xts-enc.S
+@@ -60,0 +61,3 @@
++#if defined(__ELF__)
++.type S2N_BN_SYMBOL(aes_hw_xts_encrypt), %function
++#endif
+--- a/aws-lc/third_party/s2n-bignum/s2n-bignum-to-be-imported/arm/aes/aes-xts-dec.S
++++ b/aws-lc/third_party/s2n-bignum/s2n-bignum-to-be-imported/arm/aes/aes-xts-dec.S
+@@ -67,0 +68,3 @@
++#if defined(__ELF__)
++.type S2N_BN_SYMBOL(aes_hw_xts_decrypt), %function
++#endif

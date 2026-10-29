@@ -73,6 +73,17 @@ describes the separate target compilation and runtime scope.
 MIT for this project's files; the files derived from the AROS tree's Rust
 port stay under the AROS Public License 1.1. [NOTICE](NOTICE) lists them.
 
+To regenerate one dependency without copying the complete store, use
+`python3 crates/store.py --crate NAME-VERSION --output NEW_DIRECTORY` with the
+same cache/offline options. The key must exist in `crates.json`; archive digest
+verification and patch application are identical to a complete-store build.
+The output is generated input, not another source home.
+`tests/aws-lc-elf-symbols.py --crate PATH --clang CLANG --readelf LLVM_READELF`
+assembles the patched XTS routines and verifies their ELF function types. Keep
+the `llvm-readelf` executable name when invoking it: resolving that symlink to
+`llvm-readobj` changes its output format.
+
+
 ## Core source exports
 
 `tools/export-core-toolchain.py --revision COMMIT --output DIRECTORY` creates
