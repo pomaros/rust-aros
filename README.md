@@ -68,6 +68,9 @@ It checks actual helper bodies and memory boundaries with selected AArch64
 record declarations on the host. [The probe procedure](tests/native-cmsg/README.md)
 describes the separate target compilation and runtime scope.
 
+The [Tokio notification regression](tests/tokio-notifications/README.md) exercises
+the AROS backend with real Mio reactors and defines its separate guest gate.
+
 ## License
 
 MIT for this project's files; the files derived from the AROS tree's Rust

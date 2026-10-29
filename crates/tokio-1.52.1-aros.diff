@@ -1,22 +1,19 @@
-diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x target -x Cargo.lock -x .cargo-ok -x .aros-diff-sha -x .aros-patch.log a/src/net/unix/ucred.rs b/src/net/unix/ucred.rs
---- a/src/net/unix/ucred.rs	2006-07-24 03:21:28
-+++ b/src/net/unix/ucred.rs	2026-10-25 03:00:22
-@@ -65,6 +65,9 @@
+--- a/src/net/unix/ucred.rs
++++ b/src/net/unix/ucred.rs
+@@ -64,6 +64,9 @@
+
  #[cfg(any(target_os = "espidf", target_os = "vita", target_os = "hurd"))]
  pub(crate) use self::impl_noproc::get_peer_cred;
- 
++
 +#[cfg(target_os = "aros")]
 +pub(crate) use self::impl_aros::get_peer_cred;
-+
+
  #[cfg(any(
      target_os = "linux",
-     target_os = "redox",
-@@ -328,5 +331,17 @@
-             gid: 0,
-             pid: None,
+@@ -330,3 +333,15 @@
          })
-+    }
-+}
+     }
+ }
 +
 +// The AROS network stack implements no Unix-domain sockets, so there are no
 +// peer credentials to report.
@@ -27,5 +24,335 @@ diff -ruN -x .cargo-checksum.json -x Cargo.toml.orig -x .cargo_vcs_info.json -x 
 +
 +    pub(crate) fn get_peer_cred(_sock: &UnixStream) -> io::Result<super::UCred> {
 +        Err(io::Error::from(io::ErrorKind::Unsupported))
++    }
++}
+--- a/src/runtime/io/driver.rs
++++ b/src/runtime/io/driver.rs
+@@ -33,6 +33,11 @@
+     poll: mio::Poll,
+ }
+
++#[cfg(target_os = "aros")]
++type ReactorWaker = Arc<mio::Waker>;
++#[cfg(not(target_os = "aros"))]
++type ReactorWaker = mio::Waker;
++
+ /// A reference to an I/O driver.
+ pub(crate) struct Handle {
+     /// Registers I/O resources.
+@@ -47,7 +52,7 @@
+     /// Used to wake up the reactor from a call to `turn`.
+     /// Not supported on `Wasi` due to lack of threading support.
+     #[cfg(not(target_os = "wasi"))]
+-    waker: mio::Waker,
++    waker: ReactorWaker,
+
+     pub(crate) metrics: IoDriverMetrics,
+
+@@ -118,6 +123,8 @@
+         let poll = mio::Poll::new()?;
+         #[cfg(not(target_os = "wasi"))]
+         let waker = mio::Waker::new(poll.registry(), TOKEN_WAKEUP)?;
++        #[cfg(target_os = "aros")]
++        let waker = Arc::new(waker);
+         let registry = poll.registry().try_clone()?;
+
+         let driver = Driver {
+@@ -260,6 +267,11 @@
+         self.waker.wake().expect("failed to wake I/O driver");
+     }
+
++    #[cfg(target_os = "aros")]
++    pub(crate) fn signal_waker(&self) -> Arc<mio::Waker> {
++        self.waker.clone()
++    }
++
+     /// Registers an I/O resource with the reactor for a given `mio::Ready` state.
+     ///
+     /// The registration token is returned.
+--- a/src/runtime/signal/aros.rs
++++ b/src/runtime/signal/aros.rs
+@@ -0,0 +1,60 @@
++// SPDX-License-Identifier: MIT
++// Copyright (c) 2026 John Knipper
++//! AROS CRT signal callbacks run synchronously in task context. Wake each live
++//! reactor through its existing native Mio waker, rather than a Unix socket.
++//! This must not be selected for platforms with asynchronous POSIX handlers.
++use std::{
++    io,
++    sync::{Arc, Mutex, Weak},
++};
++
++#[derive(Debug, Default)]
++pub(crate) struct Notifications {
++    reactors: Mutex<Vec<Weak<Reactor>>>,
++}
++
++#[derive(Debug)]
++pub(crate) struct Subscription {
++    owner: &'static Notifications,
++    reactor: Arc<Reactor>,
++}
++
++#[derive(Debug)]
++struct Reactor {
++    waker: Arc<mio::Waker>,
++}
++
++impl Notifications {
++    pub(crate) fn subscribe(&'static self, waker: Arc<mio::Waker>) -> Subscription {
++        let reactor = Arc::new(Reactor { waker });
++        self.reactors.lock().unwrap().push(Arc::downgrade(&reactor));
++        Subscription {
++            owner: self,
++            reactor,
++        }
++    }
++
++    pub(crate) fn notify(&self) {
++        // The callback records its atomic event flag before waking reactors.
++        // Holding this lock serializes notification against subscription/drop;
++        // Mio does not call back into this registry while waking its selector.
++        for reactor in self.reactors.lock().unwrap().iter() {
++            if let Some(reactor) = reactor.upgrade() {
++                // A wake is advisory: the recorded event remains pending even
++                // if the reactor is already closing.
++                let _: io::Result<()> = reactor.waker.wake();
++            }
++        }
++    }
++}
++
++impl Drop for Subscription {
++    fn drop(&mut self) {
++        let key = Arc::downgrade(&self.reactor);
++        self.owner
++            .reactors
++            .lock()
++            .unwrap()
++            .retain(|entry| !entry.ptr_eq(&key));
++    }
++}
+--- a/src/runtime/signal/mod.rs
++++ b/src/runtime/signal/mod.rs
+@@ -2,11 +2,17 @@
+
+ //! Signal driver
+
++#[cfg(target_os = "aros")]
++pub(crate) mod aros;
++
+ use crate::runtime::{driver, io};
+ use crate::signal::registry::globals;
+
++#[cfg(not(target_os = "aros"))]
+ use mio::net::UnixStream;
+-use std::io::{self as std_io, Read};
++use std::io as std_io;
++#[cfg(not(target_os = "aros"))]
++use std::io::Read;
+ use std::sync::{Arc, Weak};
+ use std::time::Duration;
+
+@@ -21,7 +27,10 @@
+     io: io::Driver,
+
+     /// A pipe for receiving wake events from the signal handler
++    #[cfg(not(target_os = "aros"))]
+     receiver: UnixStream,
++    #[cfg(target_os = "aros")]
++    _subscription: aros::Subscription,
+
+     /// Shared state. The driver keeps a strong ref and the handle keeps a weak
+     /// ref. The weak ref is used to check if the driver is still active before
+@@ -41,43 +50,56 @@
+ impl Driver {
+     /// Creates a new signal `Driver` instance that delegates wakeups to `park`.
+     pub(crate) fn new(io: io::Driver, io_handle: &io::Handle) -> std_io::Result<Self> {
+-        use std::mem::ManuallyDrop;
+-        use std::os::unix::io::{AsRawFd, FromRawFd};
++        #[cfg(target_os = "aros")]
++        {
++            let subscription = globals().subscribe(io_handle.signal_waker());
++            Ok(Self {
++                io,
++                _subscription: subscription,
++                inner: Arc::new(()),
++            })
++        }
++        #[cfg(not(target_os = "aros"))]
++        {
++            use std::mem::ManuallyDrop;
++            use std::os::unix::io::{AsRawFd, FromRawFd};
+
+-        // NB: We give each driver a "fresh" receiver file descriptor to avoid
+-        // the issues described in alexcrichton/tokio-process#42.
+-        //
+-        // In the past we would reuse the actual receiver file descriptor and
+-        // swallow any errors around double registration of the same descriptor.
+-        // I'm not sure if the second (failed) registration simply doesn't end
+-        // up receiving wake up notifications, or there could be some race
+-        // condition when consuming readiness events, but having distinct
+-        // descriptors appears to mitigate this.
+-        //
+-        // Unfortunately we cannot just use a single global UnixStream instance
+-        // either, since we can't assume they will always be registered with the
+-        // exact same reactor.
+-        //
+-        // Mio 0.7 removed `try_clone()` as an API due to unexpected behavior
+-        // with registering dups with the same reactor. In this case, duping is
+-        // safe as each dup is registered with separate reactors **and** we
+-        // only expect at least one dup to receive the notification.
++            // NB: We give each driver a "fresh" receiver file descriptor to avoid
++            // the issues described in alexcrichton/tokio-process#42.
++            //
++            // In the past we would reuse the actual receiver file descriptor and
++            // swallow any errors around double registration of the same descriptor.
++            // I'm not sure if the second (failed) registration simply doesn't end
++            // up receiving wake up notifications, or there could be some race
++            // condition when consuming readiness events, but having distinct
++            // descriptors appears to mitigate this.
++            //
++            // Unfortunately we cannot just use a single global UnixStream instance
++            // either, since we can't assume they will always be registered with the
++            // exact same reactor.
++            //
++            // Mio 0.7 removed `try_clone()` as an API due to unexpected behavior
++            // with registering dups with the same reactor. In this case, duping is
++            // safe as each dup is registered with separate reactors **and** we
++            // only expect at least one dup to receive the notification.
+
+-        // Manually drop as we don't actually own this instance of UnixStream.
+-        let receiver_fd = globals().receiver.as_raw_fd();
++            // Manually drop as we don't actually own this instance of UnixStream.
++            let receiver_fd = globals().receiver.as_raw_fd();
+
+-        // safety: there is nothing unsafe about this, but the `from_raw_fd` fn is marked as unsafe.
+-        let original =
+-            ManuallyDrop::new(unsafe { std::os::unix::net::UnixStream::from_raw_fd(receiver_fd) });
+-        let mut receiver = UnixStream::from_std(original.try_clone()?);
++            // safety: there is nothing unsafe about this, but the `from_raw_fd` fn is marked as unsafe.
++            let original = ManuallyDrop::new(unsafe {
++                std::os::unix::net::UnixStream::from_raw_fd(receiver_fd)
++            });
++            let mut receiver = UnixStream::from_std(original.try_clone()?);
+
+-        io_handle.register_signal_receiver(&mut receiver)?;
++            io_handle.register_signal_receiver(&mut receiver)?;
+
+-        Ok(Self {
+-            io,
+-            receiver,
+-            inner: Arc::new(()),
+-        })
++            Ok(Self {
++                io,
++                receiver,
++                inner: Arc::new(()),
++            })
++        }
+     }
+
+     /// Returns a handle to this event loop which can be sent across threads
+@@ -103,27 +125,34 @@
+     }
+
+     fn process(&mut self) {
+-        // If the signal pipe has not received a readiness event, then there is
+-        // nothing else to do.
+-        if !self.io.consume_signal_ready() {
+-            return;
++        #[cfg(target_os = "aros")]
++        {
++            globals().broadcast();
+         }
++        #[cfg(not(target_os = "aros"))]
++        {
++            // If the signal pipe has not received a readiness event, then there is
++            // nothing else to do.
++            if !self.io.consume_signal_ready() {
++                return;
++            }
+
+-        // Drain the pipe completely so we can receive a new readiness event
+-        // if another signal has come in.
+-        let mut buf = [0; 128];
+-        #[allow(clippy::unused_io_amount)]
+-        loop {
+-            match self.receiver.read(&mut buf) {
+-                Ok(0) => panic!("EOF on self-pipe"),
+-                Ok(_) => continue, // Keep reading
+-                Err(e) if e.kind() == std_io::ErrorKind::WouldBlock => break,
+-                Err(e) => panic!("Bad read on self-pipe: {e}"),
++            // Drain the pipe completely so we can receive a new readiness event
++            // if another signal has come in.
++            let mut buf = [0; 128];
++            #[allow(clippy::unused_io_amount)]
++            loop {
++                match self.receiver.read(&mut buf) {
++                    Ok(0) => panic!("EOF on self-pipe"),
++                    Ok(_) => continue, // Keep reading
++                    Err(e) if e.kind() == std_io::ErrorKind::WouldBlock => break,
++                    Err(e) => panic!("Bad read on self-pipe: {e}"),
++                }
+             }
++
++            // Broadcast any signals which were received
++            globals().broadcast();
+         }
+-
+-        // Broadcast any signals which were received
+-        globals().broadcast();
      }
  }
+
+--- a/src/signal/unix.rs
++++ b/src/signal/unix.rs
+@@ -12,8 +12,11 @@
+ use crate::signal::RxFuture;
+ use crate::sync::watch;
+
++#[cfg(not(target_os = "aros"))]
+ use mio::net::UnixStream;
+-use std::io::{self, Error, ErrorKind, Write};
++use std::io::{self, Error, ErrorKind};
++#[cfg(not(target_os = "aros"))]
++use std::io::Write;
+ use std::sync::OnceLock;
+ use std::task::{Context, Poll};
+
+@@ -60,12 +63,17 @@
+     }
+ }
+
++#[cfg(target_os = "aros")]
++pub(crate) type OsExtraData = crate::runtime::signal::aros::Notifications;
++
++#[cfg(not(target_os = "aros"))]
+ #[derive(Debug)]
+ pub(crate) struct OsExtraData {
+     sender: UnixStream,
+     pub(crate) receiver: UnixStream,
+ }
+
++#[cfg(not(target_os = "aros"))]
+ impl Default for OsExtraData {
+     fn default() -> Self {
+         let (receiver, sender) = UnixStream::pair().expect("failed to create UnixStream");
+@@ -257,8 +265,14 @@
+
+     // Send a wakeup, ignore any errors (anything reasonably possible is
+     // full pipe and then it will wake up anyway).
+-    let mut sender = &globals.sender;
+-    drop(sender.write(&[1]));
++    #[cfg(not(target_os = "aros"))]
++    {
++        let mut sender = &globals.sender;
++        drop(sender.write(&[1]));
++    }
++    // AROS CRT callbacks are synchronous; no Unix asynchronous handler runs here.
++    #[cfg(target_os = "aros")]
++    globals.notify();
+ }
+
+ /// Enables this module to receive signal notifications for the `signal`
